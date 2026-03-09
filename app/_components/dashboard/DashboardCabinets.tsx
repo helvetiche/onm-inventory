@@ -4,7 +4,9 @@ import type { DragEvent, JSX } from "react";
 import {
   FirstAidKit,
   Package,
+  Pill,
   ShieldCheck,
+  Syringe,
   Thermometer,
   WarningCircle,
 } from "@phosphor-icons/react";
@@ -21,38 +23,46 @@ const initialZones: CabinetZone[] = [
     id: "zone-cold",
     title: "Cold Storage",
     description: "Pharmaceuticals, vaccines.",
-    capacity: 24,
+    capacity: 32,
     items: [
       { id: "c1", code: "SKU-0234", name: "mRNA Vaccines", priority: "critical", status: "low", units: 48 },
-      { id: "c2", code: "SKU-1120", name: "Insulin", priority: "high", status: "healthy", units: 96 },
+      { id: "c2", code: "SKU-1120", name: "Insulin Type B", priority: "high", status: "healthy", units: 96 },
+      { id: "c3", code: "SKU-1145", name: "Heparin vials", priority: "critical", status: "low", units: 24 },
+      { id: "c4", code: "SKU-1189", name: "IV Fluids 0.9%", priority: "high", status: "healthy", units: 180 },
     ],
   },
   {
     id: "zone-dry",
     title: "Dry Storage",
     description: "Consumables, room temp.",
-    capacity: 32,
+    capacity: 48,
     items: [
-      { id: "c3", code: "SKU-0450", name: "Surgical Masks", priority: "normal", status: "healthy", units: 520 },
-      { id: "c4", code: "SKU-0581", name: "Nitrile Gloves", priority: "normal", status: "overstock", units: 1280 },
+      { id: "c5", code: "SKU-0450", name: "Surgical Masks", priority: "normal", status: "healthy", units: 520 },
+      { id: "c6", code: "SKU-0581", name: "Nitrile Gloves M", priority: "normal", status: "overstock", units: 1280 },
+      { id: "c7", code: "SKU-0623", name: "Bandages assorted", priority: "normal", status: "healthy", units: 340 },
+      { id: "c8", code: "SKU-0712", name: "Alcohol swabs", priority: "normal", status: "low", units: 92 },
+      { id: "c9", code: "SKU-0789", name: "Gauze pads 4x4", priority: "high", status: "healthy", units: 256 },
     ],
   },
   {
     id: "zone-quarantine",
     title: "Quarantine",
     description: "Quality-check items.",
-    capacity: 14,
+    capacity: 20,
     items: [
-      { id: "c5", code: "SKU-2094", name: "Antibiotics", priority: "high", status: "low", units: 22 },
+      { id: "c10", code: "SKU-2094", name: "Antibiotics Batch Q3", priority: "high", status: "low", units: 22 },
+      { id: "c11", code: "SKU-2156", name: "Expired acetaminophen", priority: "normal", status: "low", units: 8 },
     ],
   },
   {
     id: "zone-outbound",
     title: "Outbound",
     description: "Staged for wards.",
-    capacity: 18,
+    capacity: 24,
     items: [
-      { id: "c6", code: "SKU-3140", name: "Emergency Kits", priority: "high", status: "healthy", units: 40 },
+      { id: "c12", code: "SKU-3140", name: "Emergency Kits", priority: "high", status: "healthy", units: 40 },
+      { id: "c13", code: "SKU-3201", name: "OR packs", priority: "high", status: "healthy", units: 18 },
+      { id: "c14", code: "SKU-3287", name: "ICU consumables", priority: "critical", status: "healthy", units: 64 },
     ],
   },
 ];
@@ -70,9 +80,11 @@ const statusClasses: Record<InventoryCardStatus, string> = {
 };
 
 const getItemIcon = (item: InventoryCard): JSX.Element => {
-  if (item.id === "c1") return <Thermometer size={16} weight="bold" />;
-  if (item.id === "c6") return <FirstAidKit size={16} weight="bold" />;
-  if (["c3", "c4"].includes(item.id)) return <Package size={16} weight="bold" />;
+  if (item.id === "c1" || item.id === "c3") return <Syringe size={16} weight="bold" />;
+  if (item.id === "c2" || item.id === "c4") return <Thermometer size={16} weight="bold" />;
+  if (item.id === "c12" || item.id === "c14") return <FirstAidKit size={16} weight="bold" />;
+  if (["c5", "c6", "c7", "c8", "c9"].includes(item.id)) return <Package size={16} weight="bold" />;
+  if (item.id === "c10" || item.id === "c11") return <Pill size={16} weight="bold" />;
   return <ShieldCheck size={16} weight="bold" />;
 };
 
@@ -139,7 +151,7 @@ export const DashboardCabinets = (): JSX.Element => {
                   {zone.items.length}/{zone.capacity}
                 </span>
               </div>
-              <div className="flex min-h-[80px] flex-col gap-1.5 rounded border border-dashed border-slate-200 bg-slate-50/30 p-2">
+              <div className="flex min-h-[80px] max-h-48 flex-col gap-1.5 overflow-y-auto rounded border border-dashed border-slate-200 bg-slate-50/30 p-2">
                 {zone.items.map((item) => (
                   <div
                     key={item.id}
@@ -149,7 +161,7 @@ export const DashboardCabinets = (): JSX.Element => {
                       draggedId === item.id ? "opacity-60" : ""
                     }`}
                   >
-                    <div className="flex h-6 w-6 items-center justify-center rounded bg-emerald-50 text-emerald-900">
+                    <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded bg-emerald-50 text-emerald-900">
                       {getItemIcon(item)}
                     </div>
                     <div className="min-w-0 flex-1">
@@ -160,15 +172,11 @@ export const DashboardCabinets = (): JSX.Element => {
                         {item.name}
                       </p>
                     </div>
-                    <div className="flex gap-0.5">
-                      <span
-                        className={`rounded px-1 py-0.5 text-[9px] ${priorityClasses[item.priority]}`}
-                      >
+                    <div className="flex flex-shrink-0 gap-0.5">
+                      <span className={`rounded px-1 py-0.5 text-[9px] ${priorityClasses[item.priority]}`}>
                         {item.priority}
                       </span>
-                      <span
-                        className={`rounded px-1 py-0.5 text-[9px] ${statusClasses[item.status]}`}
-                      >
+                      <span className={`rounded px-1 py-0.5 text-[9px] ${statusClasses[item.status]}`}>
                         {item.status}
                       </span>
                     </div>
