@@ -1,11 +1,11 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getInventoryLevelsForItem, getItemById } from "@/lib/db/server";
 
 export async function GET(
-  _request: Request,
-  context: { params: { id: string } }
+  _request: NextRequest,
+  context: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
-  const { id } = context.params;
+  const { id } = await context.params;
 
   const item = await getItemById(id);
 

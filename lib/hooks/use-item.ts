@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, type UseQueryResult } from "@tanstack/react-query";
 import { z } from "zod";
 import type { InventoryItem, InventoryLevel } from "@/lib/db/types";
 
@@ -43,7 +43,9 @@ const fetchItemDetail = async (
   return parsed as { item: InventoryItem; levels: InventoryLevel[] };
 };
 
-export const useItemQuery = (id: string | null) => {
+export const useItemQuery = (
+  id: string | null
+): UseQueryResult<{ item: InventoryItem; levels: InventoryLevel[] }> => {
   return useQuery({
     queryKey: ["item", id],
     queryFn: () => {

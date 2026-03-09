@@ -1,6 +1,12 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useMutation,
+  type UseMutationResult,
+  useQuery,
+  type UseQueryResult,
+  useQueryClient,
+} from "@tanstack/react-query";
 import type { InventoryItem } from "@/lib/db/types";
 import { z } from "zod";
 
@@ -62,14 +68,18 @@ const createItemRequest = async (
   return json as InventoryItem;
 };
 
-export const useItemsQuery = () => {
+export const useItemsQuery = (): UseQueryResult<InventoryItem[]> => {
   return useQuery({
     queryKey: ["items"],
     queryFn: fetchItems,
   });
 };
 
-export const useCreateItemMutation = () => {
+export const useCreateItemMutation = (): UseMutationResult<
+  InventoryItem,
+  Error,
+  CreateItemInput
+> => {
   const queryClient = useQueryClient();
 
   return useMutation({
