@@ -6,6 +6,8 @@ export const env = createEnv({
     FIREBASE_PROJECT_ID: z.string().min(1),
     FIREBASE_CLIENT_EMAIL: z.string().email(),
     FIREBASE_PRIVATE_KEY: z.string().min(1),
+    UPSTASH_REDIS_REST_URL: z.string().url(),
+    UPSTASH_REDIS_REST_TOKEN: z.string().min(1),
   },
   client: {
     NEXT_PUBLIC_FIREBASE_API_KEY: z.string().min(1),
@@ -20,6 +22,8 @@ export const env = createEnv({
     FIREBASE_PROJECT_ID: process.env.FIREBASE_PROJECT_ID,
     FIREBASE_CLIENT_EMAIL: process.env.FIREBASE_CLIENT_EMAIL,
     FIREBASE_PRIVATE_KEY: process.env.FIREBASE_PRIVATE_KEY,
+    UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
+    UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
     NEXT_PUBLIC_FIREBASE_API_KEY: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
     NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN:
       process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
