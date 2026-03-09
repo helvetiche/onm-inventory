@@ -47,42 +47,94 @@ const buildCacheKey = (key: string, prefix?: string): string => {
   return key;
 };
 
-export const getCachedValue = async <TValue extends CacheableValue>(
-  key: string,
-  options?: CacheOptions
-): Promise<TValue | null> => {
-  const cacheKey = buildCacheKey(key, options?.prefix);
-  const cached = await redis.get<TValue | null>(cacheKey);
+export const createCacheClient = ():
+  | {
+      client: CacheClient;
+      getCachedValue: <TValue extends CacheableValue>(
+        key: string,
+        options?: CacheOptions
+      ) => Promise<TValue | null>;
+      setCachedValue: <TValue extends CacheableValue>(
+        key: string,
+        value: TValue,
+        options?: CacheOptions
+      ) => Promise<void>;
+      getOrSetCachedValue: <TValue extends CacheableValue>(
+        key: string,
+        fetchValue: () => Promise<TValue>,
+        options?: CacheOptions
+      ) => Promise<TValue>;
+    }
+  | never => {
+  const client: CacheClient = {
+    async get<TValue extends CacheableValue>(
+      key: string
+    ): Promise<TValue | null> {
+      const cached = await redis.get<TValue | null>(key);
 
-  return cached ?? null;
+      return cached ?? null;
+    },
+    async set<TValue extends CacheableValue>(
+      key: string,
+      value: TValue,
+      ttlSeconds?: number
+    ): Promise<void> {
+      const effectiveTtl = ttlSeconds ?? 60;
+
+      await redis.set(key, value, { ex: effectiveTtl });
+    },
+  };
+
+  const getCachedValue = async <TValue extends CacheableValue>(
+    key: string,
+    options?: CacheOptions
+  ): Promise<TValue | null> => {
+    const cacheKey = buildCacheKey(key, options?.prefix);
+
+    return client.get<TValue>(cacheKey);
+  };
+
+  const setCachedValue = async <TValue extends CacheableValue>(
+    key: string,
+    value: TValue,
+    options?: CacheOptions
+  ): Promise<void> => {
+    const cacheKey = buildCacheKey(key, options?.prefix);
+    const ttlSeconds = options?.ttlSeconds ?? 60;
+
+    await client.set<TValue>(cacheKey, value, ttlSeconds);
+  };
+
+  const getOrSetCachedValue = async <TValue extends CacheableValue>(
+    key: string,
+    fetchValue: () => Promise<TValue>,
+    options?: CacheOptions
+  ): Promise<TValue> => {
+    const cached = await getCachedValue<TValue>(key, options);
+
+    if (cached !== null) {
+      return cached;
+    }
+
+    const freshValue = await fetchValue();
+
+    await setCachedValue<TValue>(key, freshValue, options);
+
+    return freshValue;
+  };
+
+  return {
+    client,
+    getCachedValue,
+    setCachedValue,
+    getOrSetCachedValue,
+  };
 };
 
-export const setCachedValue = async <TValue extends CacheableValue>(
-  key: string,
-  value: TValue,
-  options?: CacheOptions
-): Promise<void> => {
-  const cacheKey = buildCacheKey(key, options?.prefix);
-  const ttlSeconds = options?.ttlSeconds ?? 60;
-
-  await redis.set(cacheKey, value, { ex: ttlSeconds });
-};
-
-export const getOrSetCachedValue = async <TValue extends CacheableValue>(
-  key: string,
-  fetchValue: () => Promise<TValue>,
-  options?: CacheOptions
-): Promise<TValue> => {
-  const cached = await getCachedValue<TValue>(key, options);
-
-  if (cached !== null) {
-    return cached;
-  }
-
-  const freshValue = await fetchValue();
-
-  await setCachedValue<TValue>(key, freshValue, options);
-
-  return freshValue;
-};
+export const {
+  client: cacheClient,
+  getCachedValue,
+  setCachedValue,
+  getOrSetCachedValue,
+} = createCacheClient();
 
