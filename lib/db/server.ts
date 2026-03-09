@@ -13,6 +13,20 @@ import { z } from "zod";
 const ITEMS_COLLECTION = "items";
 const LEVELS_COLLECTION = "inventoryLevels";
 
+type FirestoreDocument = {
+  id: string;
+  data: unknown;
+};
+
+export interface InventoryDb {
+  getAllItems(): Promise<FirestoreDocument[]>;
+  getItemById(id: string): Promise<FirestoreDocument | null>;
+  getLevelsByItemId(itemId: string): Promise<FirestoreDocument[]>;
+  createItem(
+    data: Record<string, unknown>
+  ): Promise<FirestoreDocument>;
+}
+
 const createTimestamp = (): Date => new Date();
 
 const firestoreItemToDomain = (
@@ -59,61 +73,148 @@ const createItemInputSchema = inventoryItemSchema.omit({
 });
 
 export type CreateItemInput = z.infer<typeof createItemInputSchema>;
+export interface InventoryRepository {
+  getAllItems(): Promise<InventoryItem[]>;
+  getItemById(id: string): Promise<InventoryItem | null>;
+  createItem(input: CreateItemInput): Promise<InventoryItem>;
+  getInventoryLevelsForItem(itemId: string): Promise<InventoryLevel[]>;
+}
 
-export const getAllItems = async (): Promise<InventoryItem[]> => {
-  const cacheKey = "items:all";
+const createInventoryDb = (): InventoryDb => {
+  const getAllItems = async (): Promise<FirestoreDocument[]> => {
+    const snapshot = await adminDb.collection(ITEMS_COLLECTION).get();
 
-  const snapshot = await adminDb.collection(ITEMS_COLLECTION).get();
+    return snapshot.docs.map((doc) => ({
+      id: doc.id,
+      data: doc.data(),
+    }));
+  };
 
-  const parsedItems = snapshot.docs.map((doc) =>
-    firestoreItemToDomain(doc.id, doc.data())
-  );
+  const getItemById = async (
+    id: string
+  ): Promise<FirestoreDocument | null> => {
+    const doc = await adminDb.collection(ITEMS_COLLECTION).doc(id).get();
 
-  return parsedItems;
+    if (!doc.exists) {
+      return null;
+    }
+
+    return {
+      id: doc.id,
+      data: doc.data(),
+    };
+  };
+
+  const getLevelsByItemId = async (
+    itemId: string
+  ): Promise<FirestoreDocument[]> => {
+    const snapshot = await adminDb
+      .collection(LEVELS_COLLECTION)
+      .where("itemId", "==", itemId)
+      .get();
+
+    return snapshot.docs.map((doc) => ({
+      id: doc.id,
+      data: doc.data(),
+    }));
+  };
+
+  const createItem = async (
+    data: Record<string, unknown>
+  ): Promise<FirestoreDocument> => {
+    const docRef = adminDb.collection(ITEMS_COLLECTION).doc();
+
+    await docRef.set(data);
+
+    const created = await docRef.get();
+
+    return {
+      id: created.id,
+      data: created.data() as Record<string, unknown>,
+    };
+  };
+
+  return {
+    getAllItems,
+    getItemById,
+    getLevelsByItemId,
+    createItem,
+  };
 };
 
-export const getItemById = async (id: string): Promise<InventoryItem | null> => {
-  const doc = await adminDb.collection(ITEMS_COLLECTION).doc(id).get();
+export const createInventoryRepository = (
+  db: InventoryDb
+): InventoryRepository => {
+  const getAllItems = async (): Promise<InventoryItem[]> => {
+    const docs = await db.getAllItems();
 
-  if (!doc.exists) {
-    return null;
-  }
+    return docs.map((doc) =>
+      firestoreItemToDomain(doc.id, doc.data)
+    );
+  };
 
-  return firestoreItemToDomain(doc.id, doc.data());
+  const getItemById = async (id: string): Promise<InventoryItem | null> => {
+    const doc = await db.getItemById(id);
+
+    if (!doc) {
+      return null;
+    }
+
+    return firestoreItemToDomain(doc.id, doc.data);
+  };
+
+  const createItem = async (
+    input: CreateItemInput
+  ): Promise<InventoryItem> => {
+    const parsedInput = createItemInputSchema.parse(input);
+    const now = createTimestamp();
+
+    const document = await db.createItem({
+      ...parsedInput,
+      isActive: true,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    return firestoreItemToDomain(document.id, document.data);
+  };
+
+  const getInventoryLevelsForItem = async (
+    itemId: string
+  ): Promise<InventoryLevel[]> => {
+    const docs = await db.getLevelsByItemId(itemId);
+
+    return docs.map((doc) =>
+      firestoreLevelToDomain(doc.id, doc.data)
+    );
+  };
+
+  return {
+    getAllItems,
+    getItemById,
+    createItem,
+    getInventoryLevelsForItem,
+  };
 };
+
+const defaultInventoryDb = createInventoryDb();
+
+export const inventoryRepository =
+  createInventoryRepository(defaultInventoryDb);
+
+export const getAllItems = async (): Promise<InventoryItem[]> =>
+  inventoryRepository.getAllItems();
+
+export const getItemById = async (
+  id: string
+): Promise<InventoryItem | null> => inventoryRepository.getItemById(id);
 
 export const createItem = async (
   input: CreateItemInput
-): Promise<InventoryItem> => {
-  const parsedInput = createItemInputSchema.parse(input);
-  const now = createTimestamp();
-
-  const docRef = adminDb.collection(ITEMS_COLLECTION).doc();
-
-  await docRef.set({
-    ...parsedInput,
-    isActive: true,
-    createdAt: now,
-    updatedAt: now,
-  });
-
-  const created = await docRef.get();
-
-  return firestoreItemToDomain(created.id, created.data());
-};
+): Promise<InventoryItem> => inventoryRepository.createItem(input);
 
 export const getInventoryLevelsForItem = async (
   itemId: string
-): Promise<InventoryLevel[]> => {
-  const snapshot = await adminDb
-    .collection(LEVELS_COLLECTION)
-    .where("itemId", "==", itemId)
-    .get();
-
-  const levels = snapshot.docs.map((doc) =>
-    firestoreLevelToDomain(doc.id, doc.data())
-  );
-
-  return levels;
-};
+): Promise<InventoryLevel[]> =>
+  inventoryRepository.getInventoryLevelsForItem(itemId);
 
