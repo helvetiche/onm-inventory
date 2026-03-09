@@ -1,5 +1,12 @@
 import type { JSX } from "react";
+import { DashboardShell } from "./_components/dashboard/DashboardShell";
 
-export default function Home(): JSX.Element {
-  return <main className="min-h-screen" />;
-}
+const Home = (): JSX.Element => {
+  return (
+    <main className="min-h-screen bg-emerald-50/40">
+      <DashboardShell />
+    </main>
+  );
+};
+
+export default Home;

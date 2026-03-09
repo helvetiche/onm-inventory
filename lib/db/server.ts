@@ -7,7 +7,6 @@ import {
   inventoryItemSchema,
   inventoryLevelSchema,
 } from "@/lib/db/types";
-import { getOrSetCachedValue } from "@/lib/upstash";
 import { z } from "zod";
 
 const ITEMS_COLLECTION = "items";
