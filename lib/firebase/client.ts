@@ -1,9 +1,11 @@
+"use client";
+
 import { initializeApp, getApp, getApps, type FirebaseApp } from "firebase/app";
 import { getAuth, type Auth } from "firebase/auth";
 import { getFirestore, type Firestore } from "firebase/firestore";
 import { env } from "@/lib/env";
 
-const firebaseConfig = {
+const firebaseClientConfig = {
   apiKey: env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
   projectId: env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
@@ -11,18 +13,27 @@ const firebaseConfig = {
   messagingSenderId: env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
   appId: env.NEXT_PUBLIC_FIREBASE_APP_ID,
   measurementId: env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
-};
+} as const;
 
-const createFirebaseApp = (): FirebaseApp => {
-  if (getApps().length > 0) {
-    return getApp();
+let firebaseClientApp: FirebaseApp | undefined;
+
+const getFirebaseClientApp = (): FirebaseApp => {
+  if (firebaseClientApp) {
+    return firebaseClientApp;
   }
 
-  return initializeApp(firebaseConfig);
+  if (getApps().length > 0) {
+    firebaseClientApp = getApp();
+
+    return firebaseClientApp;
+  }
+
+  firebaseClientApp = initializeApp(firebaseClientConfig);
+
+  return firebaseClientApp;
 };
 
-const app = createFirebaseApp();
+const clientApp = getFirebaseClientApp();
 
-export const firebaseAuth: Auth = getAuth(app);
-export const firestoreDb: Firestore = getFirestore(app);
-
+export const clientAuth: Auth = getAuth(clientApp);
+export const clientDb: Firestore = getFirestore(clientApp);
