@@ -2,6 +2,11 @@
 
 import type { JSX } from "react";
 import { useState } from "react";
+import {
+  DashboardSidebar,
+  type ComponentVisibility,
+  type DashboardComponentId,
+} from "./DashboardSidebar";
 import { DashboardHeader } from "./DashboardHeader";
 import { DashboardAnalytics } from "./DashboardAnalytics";
 import { DashboardCharts } from "./DashboardCharts";
@@ -63,41 +68,65 @@ export type Shortcut = {
   enabled: boolean;
 };
 
+const INITIAL_VISIBILITY: ComponentVisibility = {
+  analytics: true,
+  charts: true,
+  cabinets: true,
+  audit: true,
+  insights: true,
+  shortcuts: true,
+};
+
 export const DashboardShell = (): JSX.Element => {
   const [selectedRange, setSelectedRange] = useState<DateRangeKey>("7d");
   const [activeAuditFilter, setActiveAuditFilter] =
     useState<AuditCategory | "all">("all");
   const [expandedAuditId, setExpandedAuditId] = useState<string | null>(null);
+  const [visibility, setVisibility] =
+    useState<ComponentVisibility>(INITIAL_VISIBILITY);
+
+  const handleToggleComponent = (id: DashboardComponentId): void => {
+    setVisibility((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-7xl flex-col gap-6 px-4 pb-8 pt-6 lg:gap-8 lg:px-8 lg:pb-10 lg:pt-8">
-      <DashboardHeader
-        selectedRange={selectedRange}
-        onChangeRange={setSelectedRange}
-      />
+    <div className="flex min-h-screen w-full">
+      <DashboardSidebar visibility={visibility} onToggle={handleToggleComponent} />
 
-      <DashboardAnalytics selectedRange={selectedRange} />
+      <div className="flex flex-1 flex-col gap-4 overflow-auto px-3 py-4 lg:px-5 lg:py-5">
+        <DashboardHeader
+          selectedRange={selectedRange}
+          onChangeRange={setSelectedRange}
+        />
 
-      <section
-        aria-label="Inventory layout and audit"
-        className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1.25fr)] lg:gap-8"
-      >
-        <div className="space-y-6 lg:space-y-8">
-          <DashboardCharts selectedRange={selectedRange} />
-          <DashboardCabinets />
-          <DashboardInsights />
-        </div>
-        <div className="space-y-6 lg:space-y-8">
-          <DashboardAuditTrail
-            activeFilter={activeAuditFilter}
-            onChangeFilter={setActiveAuditFilter}
-            expandedAuditId={expandedAuditId}
-            onChangeExpandedAuditId={setExpandedAuditId}
-          />
-          <DashboardShortcuts />
-        </div>
-      </section>
+        {visibility.analytics && (
+          <DashboardAnalytics selectedRange={selectedRange} />
+        )}
+
+        <section
+          aria-label="Dashboard content"
+          className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_320px] lg:gap-6"
+        >
+          <div className="flex flex-col gap-4 lg:gap-6">
+            {visibility.charts && (
+              <DashboardCharts selectedRange={selectedRange} />
+            )}
+            {visibility.cabinets && <DashboardCabinets />}
+            {visibility.insights && <DashboardInsights />}
+          </div>
+          <div className="flex flex-col gap-4 lg:gap-6">
+            {visibility.audit && (
+              <DashboardAuditTrail
+                activeFilter={activeAuditFilter}
+                onChangeFilter={setActiveAuditFilter}
+                expandedAuditId={expandedAuditId}
+                onChangeExpandedAuditId={setExpandedAuditId}
+              />
+            )}
+            {visibility.shortcuts && <DashboardShortcuts />}
+          </div>
+        </section>
+      </div>
     </div>
   );
 };
-

@@ -3,7 +3,7 @@ import { DashboardShell } from "./_components/dashboard/DashboardShell";
 
 const Home = (): JSX.Element => {
   return (
-    <main className="min-h-screen bg-emerald-50/40">
+    <main className="min-h-screen w-full bg-white">
       <DashboardShell />
     </main>
   );

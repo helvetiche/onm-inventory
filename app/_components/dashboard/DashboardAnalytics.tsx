@@ -15,137 +15,89 @@ type DashboardAnalyticsProps = {
   selectedRange: DateRangeKey;
 };
 
-type AnalyticsStat = {
+type Stat = {
   id: string;
   label: string;
   value: string;
-  helper: string;
-  trendDirection: TrendDirection;
+  trend: TrendDirection;
   trendLabel: string;
   icon: JSX.Element;
 };
 
-const getTrendClasses = (direction: TrendDirection): string => {
-  if (direction === "up") {
-    return "text-emerald-700 bg-emerald-50 border-emerald-100";
-  }
-  if (direction === "down") {
-    return "text-red-700 bg-red-50 border-red-100";
-  }
-  return "text-slate-600 bg-slate-50 border-slate-100";
-};
-
-const getTrendIcon = (direction: TrendDirection): JSX.Element | null => {
-  if (direction === "up") {
-    return <TrendUp size={16} weight="bold" />;
-  }
-  if (direction === "down") {
-    return <TrendDown size={16} weight="bold" />;
-  }
-  return null;
-};
-
-const analyticsStats: AnalyticsStat[] = [
+const stats: Stat[] = [
   {
-    id: "stat-total-skus",
+    id: "skus",
     label: "Active SKUs",
     value: "1,482",
-    helper: "Across all cabinets",
-    trendDirection: "up",
-    trendLabel: "+3.1% vs last period",
-    icon: <Package size={22} weight="bold" />,
+    trend: "up",
+    trendLabel: "+3.1%",
+    icon: <Package size={20} weight="bold" />,
   },
   {
-    id: "stat-low-stock",
-    label: "Low-stock items",
+    id: "low",
+    label: "Low stock",
     value: "37",
-    helper: "Below safety threshold",
-    trendDirection: "down",
-    trendLabel: "-12.4% vs last period",
-    icon: <WarningCircle size={22} weight="bold" />,
+    trend: "down",
+    trendLabel: "-12.4%",
+    icon: <WarningCircle size={20} weight="bold" />,
   },
   {
-    id: "stat-open-pos",
-    label: "Open purchase orders",
+    id: "pos",
+    label: "Open POs",
     value: "12",
-    helper: "Awaiting confirmation",
-    trendDirection: "neutral",
-    trendLabel: "Stable vs last period",
-    icon: <NotePencil size={22} weight="bold" />,
+    trend: "neutral",
+    trendLabel: "Stable",
+    icon: <NotePencil size={20} weight="bold" />,
   },
   {
-    id: "stat-today-movements",
-    label: "Today’s movements",
+    id: "movements",
+    label: "Today movements",
     value: "284",
-    helper: "Across inbound & outbound",
-    trendDirection: "up",
-    trendLabel: "+18.2% vs average",
-    icon: <ArrowsLeftRight size={22} weight="bold" />,
+    trend: "up",
+    trendLabel: "+18.2%",
+    icon: <ArrowsLeftRight size={20} weight="bold" />,
   },
 ];
 
-const getRangeLabel = (range: DateRangeKey): string => {
-  if (range === "today") return "today";
-  if (range === "7d") return "the last 7 days";
-  return "the last 30 days";
+const trendClasses: Record<TrendDirection, string> = {
+  up: "text-emerald-600 bg-emerald-50",
+  down: "text-red-600 bg-red-50",
+  neutral: "text-slate-600 bg-slate-50",
 };
+
+const TrendIcon = ({ direction }: { direction: TrendDirection }): JSX.Element | null =>
+  direction === "up" ? (
+    <TrendUp size={12} weight="bold" />
+  ) : direction === "down" ? (
+    <TrendDown size={12} weight="bold" />
+  ) : null;
 
 export const DashboardAnalytics = ({
   selectedRange,
-}: DashboardAnalyticsProps): JSX.Element => {
-  return (
-    <section
-      aria-label="Inventory analytics overview"
-      className="space-y-3"
-    >
-      <div className="flex items-baseline justify-between gap-2">
-        <div className="space-y-1">
-          <h2 className="text-sm font-medium text-emerald-900 sm:text-base">
-            Analytics overview
-          </h2>
-          <p className="text-xs font-light text-slate-600 sm:text-sm">
-            High-level inventory and movement signals for {getRangeLabel(selectedRange)}.
-          </p>
+}: DashboardAnalyticsProps): JSX.Element => (
+  <section aria-label="Analytics" className="space-y-2">
+    <h2 className="text-sm font-medium text-emerald-900">Analytics</h2>
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      {stats.map((s) => (
+        <div
+          key={s.id}
+          className="flex items-start justify-between rounded-lg border border-slate-200 bg-white p-3"
+        >
+          <div>
+            <p className="text-xs font-light text-slate-500">{s.label}</p>
+            <p className="text-lg font-medium text-emerald-900">{s.value}</p>
+            <span
+              className={`mt-1 inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[10px] font-normal ${trendClasses[s.trend]}`}
+            >
+              <TrendIcon direction={s.trend} />
+              {s.trendLabel}
+            </span>
+          </div>
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-900">
+            {s.icon}
+          </div>
         </div>
-      </div>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {analyticsStats.map((stat) => (
-          <article
-            key={stat.id}
-            className="group flex cursor-pointer flex-col justify-between rounded-2xl border border-emerald-100 bg-white px-4 py-3 shadow-sm shadow-emerald-900/5 transition-colors hover:border-emerald-200 hover:bg-emerald-50/60 lg:px-5 lg:py-4"
-            aria-label={`${stat.label} analytics card`}
-            tabIndex={0}
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div className="space-y-1">
-                <p className="text-xs font-light text-slate-600">
-                  {stat.label}
-                </p>
-                <p className="text-lg font-medium text-emerald-900 sm:text-xl">
-                  {stat.value}
-                </p>
-              </div>
-              <div className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-900">
-                {stat.icon}
-              </div>
-            </div>
-            <div className="mt-3 flex items-center justify-between gap-2">
-              <p className="truncate text-[11px] font-light text-slate-500 sm:text-xs">
-                {stat.helper}
-              </p>
-              <span
-                className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-normal ${getTrendClasses(
-                  stat.trendDirection,
-                )}`}
-              >
-                {getTrendIcon(stat.trendDirection)}
-                <span className="truncate">{stat.trendLabel}</span>
-              </span>
-            </div>
-          </article>
-        ))}
-      </div>
-    </section>
-  );
-};
-
+      ))}
+    </div>
+  </section>
+);

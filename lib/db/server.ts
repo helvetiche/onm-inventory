@@ -198,24 +198,33 @@ export const createInventoryRepository = (
   };
 };
 
-const defaultInventoryDb = createInventoryDb();
+export const getAllItems = async (): Promise<InventoryItem[]> => {
+  const repository = createInventoryRepository(createInventoryDb());
 
-export const inventoryRepository =
-  createInventoryRepository(defaultInventoryDb);
-
-export const getAllItems = async (): Promise<InventoryItem[]> =>
-  inventoryRepository.getAllItems();
+  return repository.getAllItems();
+};
 
 export const getItemById = async (
   id: string
-): Promise<InventoryItem | null> => inventoryRepository.getItemById(id);
+): Promise<InventoryItem | null> => {
+  const repository = createInventoryRepository(createInventoryDb());
+
+  return repository.getItemById(id);
+};
 
 export const createItem = async (
   input: CreateItemInput
-): Promise<InventoryItem> => inventoryRepository.createItem(input);
+): Promise<InventoryItem> => {
+  const repository = createInventoryRepository(createInventoryDb());
+
+  return repository.createItem(input);
+};
 
 export const getInventoryLevelsForItem = async (
   itemId: string
-): Promise<InventoryLevel[]> =>
-  inventoryRepository.getInventoryLevelsForItem(itemId);
+): Promise<InventoryLevel[]> => {
+  const repository = createInventoryRepository(createInventoryDb());
+
+  return repository.getInventoryLevelsForItem(itemId);
+};
 

@@ -4,123 +4,53 @@ import type { JSX } from "react";
 import { FirstAidKit, ShieldCheck, TrendDown } from "@phosphor-icons/react";
 import type { Insight, InsightSeverity } from "./DashboardShell";
 
-const insights: Insight[] = [
-  {
-    id: "insight-01",
-    title: "Restock Cold Storage within 3 days",
-    description:
-      "Vaccine and insulin movements are trending +24% week-over-week. Cold Storage will hit critical levels in 3.2 days.",
-    severity: "high",
-  },
-  {
-    id: "insight-02",
-    title: "Consolidate gloves inventory across cabinets",
-    description:
-      "Nitrile gloves are overstocked in Dry Storage but trending flat in Outbound. Consider consolidating to reduce handling.",
-    severity: "medium",
-  },
-  {
-    id: "insight-03",
-    title: "Tighten quarantine review SLAs",
-    description:
-      "Average time-to-clear for quarantined items increased to 11.4 hours. A tighter SLA could unlock earlier availability.",
-    severity: "medium",
-  },
+const insights: (Insight & { icon: JSX.Element })[] = [
+  { id: "i1", title: "Restock Cold Storage in 3 days", description: "Vaccine/insulin trending +24% WoW.", severity: "high", icon: <FirstAidKit size={16} weight="bold" /> },
+  { id: "i2", title: "Consolidate gloves", description: "Overstock in Dry, flat in Outbound.", severity: "medium", icon: <TrendDown size={16} weight="bold" /> },
+  { id: "i3", title: "Tighten quarantine SLAs", description: "11.4h avg time-to-clear.", severity: "medium", icon: <ShieldCheck size={16} weight="bold" /> },
 ];
 
-const getSeverityClasses = (severity: InsightSeverity): string => {
-  if (severity === "high") {
-    return "bg-red-50 text-red-800 border-red-100";
-  }
-  if (severity === "medium") {
-    return "bg-amber-50 text-amber-800 border-amber-100";
-  }
-  return "bg-emerald-50 text-emerald-800 border-emerald-100";
+const severityClasses: Record<InsightSeverity, string> = {
+  high: "bg-red-50 text-red-800",
+  medium: "bg-amber-50 text-amber-800",
+  low: "bg-emerald-50 text-emerald-800",
 };
 
-const getSeverityLabel = (severity: InsightSeverity): string => {
-  if (severity === "high") return "High impact";
-  if (severity === "medium") return "Medium impact";
-  return "Low impact";
-};
-
-const getInsightIcon = (id: string): JSX.Element => {
-  if (id === "insight-01") {
-    return <FirstAidKit size={18} weight="bold" />;
-  }
-  if (id === "insight-02") {
-    return <TrendDown size={18} weight="bold" />;
-  }
-  return <ShieldCheck size={18} weight="bold" />;
-};
-
-export const DashboardInsights = (): JSX.Element => {
-  return (
-    <section
-      aria-label="Smart insights"
-      className="space-y-3"
-    >
-      <div className="flex items-baseline justify-between gap-2">
-        <div className="space-y-1">
-          <h2 className="text-sm font-medium text-emerald-900 sm:text-base">
-            Smart insights
-          </h2>
-          <p className="text-xs font-light text-slate-600 sm:text-sm">
-            System-suggested actions to keep cabinets healthy and predictable.
-          </p>
-        </div>
-      </div>
-      <div className="rounded-2xl border border-emerald-100 bg-white px-3 py-3 shadow-sm shadow-emerald-900/5 lg:px-4 lg:py-4">
-        <div className="space-y-2">
-          {insights.map((insight) => (
-            <article
-              key={insight.id}
-              className="flex items-start gap-3 rounded-xl border border-transparent px-2 py-2 transition-colors hover:border-emerald-100 hover:bg-emerald-50/60"
-            >
-              <div className="mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-emerald-900">
-                {getInsightIcon(insight.id)}
+export const DashboardInsights = (): JSX.Element => (
+  <section aria-label="Insights" className="space-y-2">
+    <h2 className="text-sm font-medium text-emerald-900">Insights</h2>
+    <div className="rounded-lg border border-slate-200 bg-white p-3">
+      <div className="space-y-2">
+        {insights.map((insight) => (
+          <div
+            key={insight.id}
+            className="flex items-start gap-2 rounded border border-transparent p-2 hover:border-slate-200 hover:bg-slate-50/50"
+          >
+            <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded bg-emerald-50 text-emerald-900">
+              {insight.icon}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-medium text-emerald-900">
+                {insight.title}
+              </p>
+              <p className="text-[10px] text-slate-500">{insight.description}</p>
+              <div className="mt-1 flex gap-1">
+                <span
+                  className={`rounded px-1.5 py-0.5 text-[9px] ${severityClasses[insight.severity]}`}
+                >
+                  {insight.severity}
+                </span>
+                <button
+                  type="button"
+                  className="rounded bg-emerald-900 px-1.5 py-0.5 text-[9px] text-white hover:bg-emerald-800"
+                >
+                  Apply
+                </button>
               </div>
-              <div className="flex-1 space-y-1">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <h3 className="text-xs font-medium text-emerald-900 sm:text-sm">
-                      {insight.title}
-                    </h3>
-                    <p className="mt-0.5 text-[11px] font-light text-slate-700 sm:text-xs">
-                      {insight.description}
-                    </p>
-                  </div>
-                  <span
-                    className={`inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-normal ${getSeverityClasses(
-                      insight.severity,
-                    )}`}
-                  >
-                    <span className="h-1.5 w-1.5 rounded-full bg-current" />
-                    <span>{getSeverityLabel(insight.severity)}</span>
-                  </span>
-                </div>
-                <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                  <button
-                    type="button"
-                    className="inline-flex items-center gap-1 rounded-full bg-emerald-900 px-2 py-0.5 text-[10px] font-normal text-white hover:bg-emerald-800"
-                    aria-label={`Accept insight: ${insight.title} (mock only)`}
-                  >
-                    <span>Apply suggestion</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-normal text-emerald-800 hover:bg-emerald-100"
-                    aria-label={`Snooze insight: ${insight.title} (mock only)`}
-                  >
-                    <span>Snooze</span>
-                  </button>
-                </div>
-              </div>
-            </article>
-          ))}
-        </div>
+            </div>
+          </div>
+        ))}
       </div>
-    </section>
-  );
-};
-
+    </div>
+  </section>
+);

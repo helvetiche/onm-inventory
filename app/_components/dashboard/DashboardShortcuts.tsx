@@ -12,146 +12,84 @@ import { useState } from "react";
 import type { Shortcut } from "./DashboardShell";
 
 const initialShortcuts: Shortcut[] = [
-  {
-    id: "shortcut-purchase-orders",
-    label: "Purchase orders",
-    description: "Draft and approve new orders.",
-    enabled: true,
-  },
-  {
-    id: "shortcut-cabinet-layouts",
-    label: "Cabinet layouts",
-    description: "Manage physical cabinet configurations.",
-    enabled: true,
-  },
-  {
-    id: "shortcut-audit-logs",
-    label: "Audit logs",
-    description: "Review sensitive actions and overrides.",
-    enabled: true,
-  },
-  {
-    id: "shortcut-alerts",
-    label: "Alerts & thresholds",
-    description: "Tune alerts for critical inventory.",
-    enabled: false,
-  },
+  { id: "po", label: "Purchase orders", description: "", enabled: true },
+  { id: "cab", label: "Cabinet layouts", description: "", enabled: true },
+  { id: "aud", label: "Audit logs", description: "", enabled: true },
+  { id: "alt", label: "Alerts", description: "", enabled: false },
 ];
 
-const getShortcutIcon = (id: string): JSX.Element => {
-  if (id === "shortcut-purchase-orders") {
-    return <NotePencil size={18} weight="bold" />;
-  }
-  if (id === "shortcut-cabinet-layouts") {
-    return <ChartBar size={18} weight="bold" />;
-  }
-  if (id === "shortcut-audit-logs") {
-    return <ShieldCheck size={18} weight="bold" />;
-  }
-  return <WarningCircle size={18} weight="bold" />;
+const getIcon = (id: string): JSX.Element => {
+  if (id === "po") return <NotePencil size={16} weight="bold" />;
+  if (id === "cab") return <ChartBar size={16} weight="bold" />;
+  if (id === "aud") return <ShieldCheck size={16} weight="bold" />;
+  return <WarningCircle size={16} weight="bold" />;
 };
 
 export const DashboardShortcuts = (): JSX.Element => {
-  const [shortcuts, setShortcuts] = useState<Shortcut[]>(initialShortcuts);
-  const [isCustomizeMode, setIsCustomizeMode] = useState(false);
+  const [shortcuts, setShortcuts] = useState(initialShortcuts);
+  const [customize, setCustomize] = useState(false);
 
-  const handleToggleShortcut = (shortcutId: string): void => {
-    setShortcuts((currentShortcuts) =>
-      currentShortcuts.map((shortcut) =>
-        shortcut.id === shortcutId
-          ? { ...shortcut, enabled: !shortcut.enabled }
-          : shortcut,
-      ),
+  const toggle = (id: string): void =>
+    setShortcuts((s) =>
+      s.map((x) => (x.id === id ? { ...x, enabled: !x.enabled } : x))
     );
-  };
 
-  const handleToggleCustomizeMode = (): void => {
-    setIsCustomizeMode((previous) => !previous);
-  };
-
-  const visibleShortcuts = shortcuts.filter((shortcut) => shortcut.enabled);
+  const visible = shortcuts.filter((s) => s.enabled);
 
   return (
-    <section
-      aria-label="Workspace shortcuts"
-      className="space-y-3"
-    >
-      <div className="flex items-baseline justify-between gap-2">
-        <div className="space-y-1">
-          <h2 className="text-sm font-medium text-emerald-900 sm:text-base">
-            Workspace shortcuts
-          </h2>
-          <p className="text-xs font-light text-slate-600 sm:text-sm">
-            Pin the actions you reach for most across the inventory workspace.
-          </p>
-        </div>
+    <section aria-label="Shortcuts" className="space-y-2">
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-medium text-emerald-900">Shortcuts</h2>
         <button
           type="button"
-          onClick={handleToggleCustomizeMode}
-          className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[10px] font-normal transition-colors ${
-            isCustomizeMode
-              ? "border-emerald-900 bg-emerald-900 text-white"
-              : "border-emerald-100 bg-white text-emerald-900 hover:border-emerald-200 hover:bg-emerald-50"
+          onClick={(): void => setCustomize(!customize)}
+          className={`flex items-center gap-1 rounded px-2 py-0.5 text-[10px] ${
+            customize ? "bg-emerald-900 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
           }`}
-          aria-pressed={isCustomizeMode}
-          aria-label="Toggle shortcut customization mode"
         >
           <GearSix size={12} weight="bold" />
-          <span>{isCustomizeMode ? "Done" : "Customize"}</span>
+          {customize ? "Done" : "Customize"}
         </button>
       </div>
-      <div className="rounded-2xl border border-emerald-100 bg-white px-3 py-3 shadow-sm shadow-emerald-900/5 lg:px-4 lg:py-4">
-        <div className="flex flex-wrap items-center gap-2">
-          {visibleShortcuts.length === 0 && (
-            <p className="text-[11px] font-light text-slate-600">
-              No shortcuts selected yet. Enable at least one to keep navigation snappy.
-            </p>
-          )}
-          {visibleShortcuts.map((shortcut) => (
+      <div className="rounded-lg border border-slate-200 bg-white p-3">
+        <div className="flex flex-wrap gap-2">
+          {visible.map((s) => (
             <button
-              key={shortcut.id}
+              key={s.id}
               type="button"
-              className="inline-flex items-center gap-1.5 rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1 text-[11px] font-normal text-emerald-900 hover:border-emerald-200 hover:bg-emerald-100"
-              aria-label={`${shortcut.label} shortcut (mock only)`}
+              className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-[11px] font-normal text-emerald-900 hover:bg-emerald-50"
             >
-              <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-emerald-900 text-white">
-                {getShortcutIcon(shortcut.id)}
+              <span className="flex h-6 w-6 items-center justify-center rounded bg-emerald-900 text-white">
+                {getIcon(s.id)}
               </span>
-              <span>{shortcut.label}</span>
+              {s.label}
             </button>
           ))}
         </div>
-        {isCustomizeMode && (
-          <div className="mt-3 border-t border-emerald-50 pt-3">
-            <p className="mb-2 text-[11px] font-light text-slate-600">
-              Toggle which shortcuts appear by default on the dashboard.
-            </p>
-            <div className="space-y-1.5">
-              {shortcuts.map((shortcut) => (
-                <label
-                  key={shortcut.id}
-                  className="flex cursor-pointer items-center justify-between gap-2 rounded-lg px-1.5 py-1.5 text-[11px] hover:bg-emerald-50/70"
-                >
-                  <span className="flex items-center gap-1.5 text-slate-700">
-                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-emerald-50 text-emerald-900">
-                      {getShortcutIcon(shortcut.id)}
-                    </span>
-                    <span>{shortcut.label}</span>
+        {customize && (
+          <div className="mt-3 space-y-1 border-t border-slate-100 pt-3">
+            {shortcuts.map((s) => (
+              <label
+                key={s.id}
+                className="flex cursor-pointer items-center justify-between gap-2 rounded px-1 py-1 hover:bg-slate-50"
+              >
+                <span className="flex items-center gap-2 text-[11px] text-slate-700">
+                  <span className="flex h-5 w-5 items-center justify-center rounded bg-emerald-50 text-emerald-900">
+                    {getIcon(s.id)}
                   </span>
-                  <input
-                    type="checkbox"
-                    checked={shortcut.enabled}
-                    onChange={(): void => handleToggleShortcut(shortcut.id)}
-                    className="h-3.5 w-3.5 rounded border border-emerald-200 text-emerald-900 accent-emerald-900"
-                    aria-label={`Toggle shortcut ${shortcut.label}`}
-                  />
-                </label>
-              ))}
-            </div>
+                  {s.label}
+                </span>
+                <input
+                  type="checkbox"
+                  checked={s.enabled}
+                  onChange={(): void => toggle(s.id)}
+                  className="rounded border-slate-200 accent-emerald-900"
+                />
+              </label>
+            ))}
           </div>
         )}
       </div>
     </section>
   );
 };
-

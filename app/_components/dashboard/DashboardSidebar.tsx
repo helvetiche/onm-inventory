@@ -45,7 +45,7 @@ export const DashboardSidebar = ({
 }: DashboardSidebarProps): JSX.Element => {
   return (
     <aside
-      className="flex w-14 flex-shrink-0 flex-col border-r border-slate-200 bg-white"
+      className="flex w-20 flex-shrink-0 flex-col border-r border-slate-200 bg-white"
       aria-label="Dashboard components"
     >
       <div className="flex flex-col gap-0.5 p-2">
