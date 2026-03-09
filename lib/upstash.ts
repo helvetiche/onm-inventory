@@ -13,7 +13,11 @@ export const rateLimiter = new Ratelimit({
   analytics: true,
 });
 
-type CacheableValue = string | number | boolean | Record<string, unknown> | null;
+type CacheablePrimitive = string | number | boolean | null;
+type CacheableValue =
+  | CacheablePrimitive
+  | CacheablePrimitive[]
+  | Record<string, unknown>;
 
 type CacheOptions = {
   ttlSeconds?: number;

@@ -15,11 +15,20 @@ const LEVELS_COLLECTION = "inventoryLevels";
 
 const createTimestamp = (): Date => new Date();
 
-const firestoreItemToDomain = (docId: string, data: unknown): InventoryItem => {
-  const parsed = inventoryItemSchema.parse({
-    id: docId,
-    ...data,
-  });
+const firestoreItemToDomain = (
+  docId: string,
+  data: unknown
+): InventoryItem => {
+  const parsed = inventoryItemSchema.parse(
+    typeof data === "object" && data !== null
+      ? {
+          id: docId,
+          ...(data as Record<string, unknown>),
+        }
+      : {
+          id: docId,
+        }
+  );
 
   return parsed;
 };
@@ -28,10 +37,16 @@ const firestoreLevelToDomain = (
   docId: string,
   data: unknown
 ): InventoryLevel => {
-  const parsed = inventoryLevelSchema.parse({
-    id: docId,
-    ...data,
-  });
+  const parsed = inventoryLevelSchema.parse(
+    typeof data === "object" && data !== null
+      ? {
+          id: docId,
+          ...(data as Record<string, unknown>),
+        }
+      : {
+          id: docId,
+        }
+  );
 
   return parsed;
 };
@@ -40,6 +55,7 @@ const createItemInputSchema = inventoryItemSchema.omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+  isActive: true,
 });
 
 export type CreateItemInput = z.infer<typeof createItemInputSchema>;
@@ -47,24 +63,13 @@ export type CreateItemInput = z.infer<typeof createItemInputSchema>;
 export const getAllItems = async (): Promise<InventoryItem[]> => {
   const cacheKey = "items:all";
 
-  const items = await getOrSetCachedValue<InventoryItem[]>(
-    cacheKey,
-    async () => {
-      const snapshot = await adminDb.collection(ITEMS_COLLECTION).get();
+  const snapshot = await adminDb.collection(ITEMS_COLLECTION).get();
 
-      const parsedItems = snapshot.docs.map((doc) =>
-        firestoreItemToDomain(doc.id, doc.data())
-      );
-
-      return parsedItems;
-    },
-    {
-      prefix: "inventory",
-      ttlSeconds: 60,
-    }
+  const parsedItems = snapshot.docs.map((doc) =>
+    firestoreItemToDomain(doc.id, doc.data())
   );
 
-  return items;
+  return parsedItems;
 };
 
 export const getItemById = async (id: string): Promise<InventoryItem | null> => {
