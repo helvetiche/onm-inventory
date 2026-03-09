@@ -1,10 +1,9 @@
 "use client";
 
 import type { JSX } from "react";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import {
   DashboardSidebar,
-  type ComponentVisibility,
   type DashboardComponentId,
 } from "./DashboardSidebar";
 import { DashboardHeader } from "./DashboardHeader";
@@ -60,29 +59,79 @@ export type Insight = {
   severity: InsightSeverity;
 };
 
-const INITIAL_VISIBILITY: ComponentVisibility = {
-  analytics: true,
-  charts: true,
-  cabinets: true,
-  audit: true,
-  insights: true,
-};
+const INITIAL_ORDER: DashboardComponentId[] = [
+  "analytics",
+  "charts",
+  "cabinets",
+  "insights",
+  "audit",
+];
+
 
 export const DashboardShell = (): JSX.Element => {
   const [selectedRange, setSelectedRange] = useState<DateRangeKey>("7d");
   const [activeAuditFilter, setActiveAuditFilter] =
     useState<AuditCategory | "all">("all");
   const [expandedAuditId, setExpandedAuditId] = useState<string | null>(null);
-  const [visibility, setVisibility] =
-    useState<ComponentVisibility>(INITIAL_VISIBILITY);
+  const [componentOrder, setComponentOrder] =
+    useState<DashboardComponentId[]>(INITIAL_ORDER);
+  const [selectedForSwap, setSelectedForSwap] =
+    useState<DashboardComponentId | null>(null);
 
-  const handleToggleComponent = (id: DashboardComponentId): void => {
-    setVisibility((prev) => ({ ...prev, [id]: !prev[id] }));
+  const handleSelectForSwap = useCallback((id: DashboardComponentId): void => {
+    setSelectedForSwap((prev) => {
+      if (prev === null) return id;
+      if (prev === id) return null;
+      setComponentOrder((order) => {
+        const a = order.indexOf(prev);
+        const b = order.indexOf(id);
+        if (a === -1 || b === -1) return order;
+        const next = [...order];
+        next[a] = order[b];
+        next[b] = order[a];
+        return next;
+      });
+      return null;
+    });
+  }, []);
+
+  const topId = componentOrder[0];
+  const leftIds = componentOrder.slice(1, 4);
+  const rightId = componentOrder[4];
+
+  const renderComponent = (id: DashboardComponentId): JSX.Element | null => {
+    if (id === "analytics") {
+      return <DashboardAnalytics selectedRange={selectedRange} />;
+    }
+    if (id === "charts") {
+      return <DashboardCharts selectedRange={selectedRange} />;
+    }
+    if (id === "cabinets") {
+      return <DashboardCabinets />;
+    }
+    if (id === "insights") {
+      return <DashboardInsights />;
+    }
+    if (id === "audit") {
+      return (
+        <DashboardAuditTrail
+          activeFilter={activeAuditFilter}
+          onChangeFilter={setActiveAuditFilter}
+          expandedAuditId={expandedAuditId}
+          onChangeExpandedAuditId={setExpandedAuditId}
+        />
+      );
+    }
+    return null;
   };
 
   return (
     <div className="flex min-h-screen w-full">
-      <DashboardSidebar visibility={visibility} onToggle={handleToggleComponent} />
+      <DashboardSidebar
+        componentOrder={componentOrder}
+        selectedId={selectedForSwap}
+        onSelect={handleSelectForSwap}
+      />
 
       <div className="flex flex-1 flex-col gap-4 overflow-auto px-3 py-4 lg:px-5 lg:py-5">
         <DashboardHeader
@@ -90,30 +139,19 @@ export const DashboardShell = (): JSX.Element => {
           onChangeRange={setSelectedRange}
         />
 
-        {visibility.analytics && (
-          <DashboardAnalytics selectedRange={selectedRange} />
-        )}
+        {renderComponent(topId)}
 
         <section
           aria-label="Dashboard content"
           className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_320px] lg:gap-6"
         >
           <div className="flex flex-col gap-4 lg:gap-6">
-            {visibility.charts && (
-              <DashboardCharts selectedRange={selectedRange} />
-            )}
-            {visibility.cabinets && <DashboardCabinets />}
-            {visibility.insights && <DashboardInsights />}
+            {leftIds.map((id) => (
+              <div key={id}>{renderComponent(id)}</div>
+            ))}
           </div>
           <div className="flex flex-col gap-4 lg:gap-6">
-            {visibility.audit && (
-              <DashboardAuditTrail
-                activeFilter={activeAuditFilter}
-                onChangeFilter={setActiveAuditFilter}
-                expandedAuditId={expandedAuditId}
-                onChangeExpandedAuditId={setExpandedAuditId}
-              />
-            )}
+            {rightId ? renderComponent(rightId) : null}
           </div>
         </section>
       </div>

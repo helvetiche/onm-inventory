@@ -2,7 +2,7 @@
 
 import type { JSX } from "react";
 import {
-  ChartBar,
+  ArrowsLeftRight,
   ChartLine,
   ClipboardText,
   Layout,
@@ -17,8 +17,6 @@ export type DashboardComponentId =
   | "audit"
   | "insights";
 
-export type ComponentVisibility = Record<DashboardComponentId, boolean>;
-
 const COMPONENT_CONFIG: {
   id: DashboardComponentId;
   label: string;
@@ -32,40 +30,58 @@ const COMPONENT_CONFIG: {
 ];
 
 type DashboardSidebarProps = {
-  visibility: ComponentVisibility;
-  onToggle: (id: DashboardComponentId) => void;
+  componentOrder: DashboardComponentId[];
+  selectedId: DashboardComponentId | null;
+  onSelect: (id: DashboardComponentId) => void;
 };
 
 export const DashboardSidebar = ({
-  visibility,
-  onToggle,
+  componentOrder,
+  selectedId,
+  onSelect,
 }: DashboardSidebarProps): JSX.Element => {
+  const handleClick = (id: DashboardComponentId): void => {
+    onSelect(id);
+  };
+
   return (
     <aside
       className="flex w-20 flex-shrink-0 flex-col border-r border-slate-200 bg-white"
-      aria-label="Dashboard components"
+      aria-label="Swap dashboard components"
     >
       <div className="flex flex-col gap-0.5 p-2">
-        <div className="mb-2 flex items-center justify-center gap-1.5 px-2 py-1">
-          <ChartBar size={18} weight="bold" className="text-emerald-900" />
+        <div className="mb-2 flex items-center justify-center gap-1 px-2 py-1">
+          <ArrowsLeftRight size={18} weight="bold" className="text-emerald-900" />
           <span className="text-xs font-medium text-emerald-900">Swap</span>
         </div>
-        {COMPONENT_CONFIG.map(({ id, label, icon }) => (
-          <button
-            key={id}
-            type="button"
-            onClick={(): void => onToggle(id)}
-            className={`flex flex-col items-center gap-1 rounded-lg px-2 py-2 text-center transition-colors hover:bg-slate-50 ${
-              visibility[id] ? "bg-emerald-50 text-emerald-900" : "text-slate-400 hover:text-slate-600"
-            }`}
-            title={`${visibility[id] ? "Hide" : "Show"} ${label}`}
-            aria-label={`${visibility[id] ? "Hide" : "Show"} ${label}`}
-            aria-pressed={visibility[id]}
-          >
-            {icon}
-            <span className="text-[10px] font-normal leading-tight">{label}</span>
-          </button>
-        ))}
+        <p className="mb-1 px-1 text-[9px] text-slate-500">
+          Pick two to swap
+        </p>
+        {COMPONENT_CONFIG.map(({ id, label, icon }) => {
+          const position = componentOrder.indexOf(id) + 1;
+          const isSelected = selectedId === id;
+          return (
+            <button
+              key={id}
+              type="button"
+              onClick={(): void => handleClick(id)}
+              className={`flex flex-col items-center gap-0.5 rounded-lg px-2 py-2 text-center transition-colors hover:bg-slate-50 ${
+                isSelected
+                  ? "bg-emerald-900 text-white ring-2 ring-emerald-600 ring-offset-1"
+                  : "text-slate-700"
+              }`}
+              title={`Swap with ${label}. Slot ${position}`}
+              aria-label={`Select ${label} to swap (slot ${position})`}
+              aria-pressed={isSelected}
+            >
+              {icon}
+              <span className="text-[10px] font-normal leading-tight">{label}</span>
+              <span className={`text-[9px] ${isSelected ? "text-emerald-200" : "text-slate-400"}`}>
+                #{position}
+              </span>
+            </button>
+          );
+        })}
       </div>
     </aside>
   );
