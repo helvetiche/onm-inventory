@@ -1,25 +1,42 @@
 import "server-only";
 
-import { cert, getApp, getApps, initializeApp, type App } from "firebase-admin/app";
+import {
+  cert,
+  getApp,
+  getApps,
+  initializeApp,
+  type App,
+} from "firebase-admin/app";
 import { getAuth, type Auth } from "firebase-admin/auth";
 import { getFirestore, type Firestore } from "firebase-admin/firestore";
 import { env } from "@/lib/env";
 
-const getFirebaseAdminApp = (): App => {
-  if (getApps().length > 0) {
-    return getApp();
+let cachedAdminApp: App | null = null;
+
+export const getFirebaseAdminApp = (): App => {
+  if (cachedAdminApp) {
+    return cachedAdminApp;
   }
 
-  return initializeApp({
+  if (getApps().length > 0) {
+    cachedAdminApp = getApp();
+
+    return cachedAdminApp;
+  }
+
+  const app = initializeApp({
     credential: cert({
       projectId: env.FIREBASE_PROJECT_ID,
       clientEmail: env.FIREBASE_CLIENT_EMAIL,
       privateKey: env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n"),
     }),
   });
+
+  cachedAdminApp = app;
+
+  return app;
 };
 
-const adminApp = getFirebaseAdminApp();
+export const getAdminAuth = (): Auth => getAuth(getFirebaseAdminApp());
 
-export const adminAuth: Auth = getAuth(adminApp);
-export const adminDb: Firestore = getFirestore(adminApp);
+export const getAdminDb = (): Firestore => getFirestore(getFirebaseAdminApp());

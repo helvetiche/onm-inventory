@@ -1,6 +1,6 @@
 import "server-only";
 
-import { adminDb } from "@/lib/firebase/admin";
+import { getAdminDb } from "@/lib/firebase/admin";
 import {
   type InventoryItem,
   type InventoryLevel,
@@ -80,8 +80,10 @@ export interface InventoryRepository {
 }
 
 const createInventoryDb = (): InventoryDb => {
+  const db = getAdminDb();
+
   const getAllItems = async (): Promise<FirestoreDocument[]> => {
-    const snapshot = await adminDb.collection(ITEMS_COLLECTION).get();
+    const snapshot = await db.collection(ITEMS_COLLECTION).get();
 
     return snapshot.docs.map((doc) => ({
       id: doc.id,
@@ -92,7 +94,7 @@ const createInventoryDb = (): InventoryDb => {
   const getItemById = async (
     id: string
   ): Promise<FirestoreDocument | null> => {
-    const doc = await adminDb.collection(ITEMS_COLLECTION).doc(id).get();
+    const doc = await db.collection(ITEMS_COLLECTION).doc(id).get();
 
     if (!doc.exists) {
       return null;
@@ -107,7 +109,7 @@ const createInventoryDb = (): InventoryDb => {
   const getLevelsByItemId = async (
     itemId: string
   ): Promise<FirestoreDocument[]> => {
-    const snapshot = await adminDb
+    const snapshot = await db
       .collection(LEVELS_COLLECTION)
       .where("itemId", "==", itemId)
       .get();
@@ -121,7 +123,7 @@ const createInventoryDb = (): InventoryDb => {
   const createItem = async (
     data: Record<string, unknown>
   ): Promise<FirestoreDocument> => {
-    const docRef = adminDb.collection(ITEMS_COLLECTION).doc();
+    const docRef = db.collection(ITEMS_COLLECTION).doc();
 
     await docRef.set(data);
 
