@@ -4,12 +4,11 @@ import type { JSX } from "react";
 import {
   ArrowsLeftRight,
   Clock,
+  Minus,
   NotePencil,
   Package,
-  TrendingDown,
   TrendDown,
   TrendUp,
-  Warehouse,
   WarningCircle,
 } from "@phosphor-icons/react";
 import type { DateRangeKey, TrendDirection } from "./DashboardShell";
@@ -34,8 +33,8 @@ const stats: Stat[] = [
   { id: "pos", label: "Open purchase orders", value: "28", sub: "pending approval", trend: "up", trendLabel: "+12%", icon: <NotePencil size={20} weight="bold" /> },
   { id: "movements", label: "Today movements", value: "1,247", sub: "inbound & outbound", trend: "up", trendLabel: "+22%", icon: <ArrowsLeftRight size={20} weight="bold" /> },
   { id: "expiring", label: "Expiring in 30d", value: "156", sub: "items to rotate", trend: "down", trendLabel: "-4%", icon: <Clock size={20} weight="bold" /> },
-  { id: "zones", label: "Storage zones", value: "8", sub: "cold, dry, quarantine", trend: "neutral", trendLabel: "Stable", icon: <Warehouse size={20} weight="bold" /> },
-  { id: "variance", label: "Cycle count variance", value: "0.3%", sub: "within tolerance", trend: "down", trendLabel: "-0.1pp", icon: <TrendingDown size={20} weight="bold" /> },
+  { id: "zones", label: "Storage zones", value: "8", sub: "cold, dry, quarantine", trend: "neutral", trendLabel: "Stable", icon: <Package size={20} weight="bold" /> },
+  { id: "variance", label: "Cycle count variance", value: "0.3%", sub: "within tolerance", trend: "down", trendLabel: "-0.1pp", icon: <TrendDown size={20} weight="bold" /> },
 ];
 
 const trendClasses: Record<TrendDirection, string> = {
@@ -44,8 +43,8 @@ const trendClasses: Record<TrendDirection, string> = {
   neutral: "text-slate-600 bg-slate-50",
 };
 
-const TrendIcon = ({ direction }: { direction: TrendDirection }): JSX.Element | null =>
-  direction === "up" ? <TrendUp size={12} weight="bold" /> : direction === "down" ? <TrendDown size={12} weight="bold" /> : null;
+const TrendIcon = ({ direction }: { direction: TrendDirection }): JSX.Element =>
+  direction === "up" ? <TrendUp size={12} weight="duotone" /> : direction === "down" ? <TrendDown size={12} weight="duotone" /> : <Minus size={12} weight="duotone" />;
 
 export const DashboardAnalytics = ({ selectedRange }: DashboardAnalyticsProps): JSX.Element => (
   <section aria-label="Analytics" className="space-y-2">
@@ -61,7 +60,7 @@ export const DashboardAnalytics = ({ selectedRange }: DashboardAnalyticsProps): 
             <p className="text-lg font-medium text-emerald-900">{s.value}</p>
             {s.sub && <p className="text-[10px] text-slate-400">{s.sub}</p>}
             <span className={`mt-1 inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[10px] font-normal ${trendClasses[s.trend]}`}>
-              <TrendIcon direction={s.trend} />
+              <TrendIcon direction={s.trend} aria-hidden />
               {s.trendLabel}
             </span>
           </div>

@@ -2,12 +2,14 @@
 
 import type { DragEvent, JSX } from "react";
 import {
+  CheckCircle,
   FirstAidKit,
   Package,
-  Pill,
   ShieldCheck,
-  Syringe,
   Thermometer,
+  TrendDown,
+  TrendUp,
+  Warning,
   WarningCircle,
 } from "@phosphor-icons/react";
 import { useState } from "react";
@@ -79,12 +81,24 @@ const statusClasses: Record<InventoryCardStatus, string> = {
   healthy: "bg-emerald-50 text-emerald-800",
 };
 
+const priorityIcons: Record<InventoryCardPriority, JSX.Element> = {
+  critical: <Warning size={12} weight="duotone" />,
+  high: <TrendUp size={12} weight="duotone" />,
+  normal: <CheckCircle size={12} weight="duotone" />,
+};
+
+const statusIcons: Record<InventoryCardStatus, JSX.Element> = {
+  low: <TrendDown size={12} weight="duotone" />,
+  healthy: <CheckCircle size={12} weight="duotone" />,
+  overstock: <Package size={12} weight="duotone" />,
+};
+
 const getItemIcon = (item: InventoryCard): JSX.Element => {
-  if (item.id === "c1" || item.id === "c3") return <Syringe size={16} weight="bold" />;
+  if (item.id === "c1" || item.id === "c3") return <Thermometer size={16} weight="bold" />;
   if (item.id === "c2" || item.id === "c4") return <Thermometer size={16} weight="bold" />;
   if (item.id === "c12" || item.id === "c14") return <FirstAidKit size={16} weight="bold" />;
   if (["c5", "c6", "c7", "c8", "c9"].includes(item.id)) return <Package size={16} weight="bold" />;
-  if (item.id === "c10" || item.id === "c11") return <Pill size={16} weight="bold" />;
+  if (item.id === "c10" || item.id === "c11") return <ShieldCheck size={16} weight="bold" />;
   return <ShieldCheck size={16} weight="bold" />;
 };
 
@@ -172,11 +186,13 @@ export const DashboardCabinets = (): JSX.Element => {
                         {item.name}
                       </p>
                     </div>
-                    <div className="flex flex-shrink-0 gap-0.5">
-                      <span className={`rounded px-1 py-0.5 text-[9px] ${priorityClasses[item.priority]}`}>
+                    <div className="flex flex-shrink-0 items-center gap-0.5">
+                      <span className={`inline-flex items-center gap-0.5 rounded px-1 py-0.5 text-[9px] ${priorityClasses[item.priority]}`}>
+                        {priorityIcons[item.priority]}
                         {item.priority}
                       </span>
-                      <span className={`rounded px-1 py-0.5 text-[9px] ${statusClasses[item.status]}`}>
+                      <span className={`inline-flex items-center gap-0.5 rounded px-1 py-0.5 text-[9px] ${statusClasses[item.status]}`}>
+                        {statusIcons[item.status]}
                         {item.status}
                       </span>
                     </div>

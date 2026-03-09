@@ -2,7 +2,9 @@
 
 import type { JSX } from "react";
 import {
+  CheckCircle,
   FirstAidKit,
+  Info,
   Lightning,
   ShieldCheck,
   ShoppingCart,
@@ -26,6 +28,12 @@ const severityClasses: Record<InsightSeverity, string> = {
   low: "bg-emerald-50 text-emerald-800",
 };
 
+const severityIcons: Record<InsightSeverity, JSX.Element> = {
+  high: <Warning size={12} weight="duotone" />,
+  medium: <Info size={12} weight="duotone" />,
+  low: <CheckCircle size={12} weight="duotone" />,
+};
+
 export const DashboardInsights = (): JSX.Element => (
   <section aria-label="Insights" className="space-y-2">
     <h2 className="text-sm font-medium text-emerald-900">Insights</h2>
@@ -46,8 +54,9 @@ export const DashboardInsights = (): JSX.Element => (
               <p className="text-[10px] text-slate-500">{insight.description}</p>
               <div className="mt-1 flex gap-1">
                 <span
-                  className={`rounded px-1.5 py-0.5 text-[9px] ${severityClasses[insight.severity]}`}
+                  className={`inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[9px] ${severityClasses[insight.severity]}`}
                 >
+                  {severityIcons[insight.severity]}
                   {insight.severity}
                 </span>
                 <button
