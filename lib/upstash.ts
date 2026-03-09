@@ -2,6 +2,21 @@ import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import { env } from "@/lib/env";
 
+export interface CacheClient {
+  get<TValue extends CacheableValue>(
+    key: string
+  ): Promise<TValue | null>;
+  set<TValue extends CacheableValue>(
+    key: string,
+    value: TValue,
+    ttlSeconds?: number
+  ): Promise<void>;
+}
+
+export interface DistributedRateLimiter {
+  limit(key: string): Promise<{ success: boolean }>;
+}
+
 export const redis = new Redis({
   url: env.UPSTASH_REDIS_REST_URL,
   token: env.UPSTASH_REDIS_REST_TOKEN,
