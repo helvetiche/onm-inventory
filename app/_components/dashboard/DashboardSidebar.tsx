@@ -7,7 +7,6 @@ import {
   ClipboardText,
   Layout,
   ListChecks,
-  SlidersHorizontal,
   SquaresFour,
 } from "@phosphor-icons/react";
 
@@ -16,8 +15,7 @@ export type DashboardComponentId =
   | "charts"
   | "cabinets"
   | "audit"
-  | "insights"
-  | "shortcuts";
+  | "insights";
 
 export type ComponentVisibility = Record<DashboardComponentId, boolean>;
 
@@ -31,7 +29,6 @@ const COMPONENT_CONFIG: {
   { id: "cabinets", label: "Cabinets", icon: <Layout size={20} weight="bold" /> },
   { id: "audit", label: "Audit trail", icon: <ClipboardText size={20} weight="bold" /> },
   { id: "insights", label: "Insights", icon: <ListChecks size={20} weight="bold" /> },
-  { id: "shortcuts", label: "Shortcuts", icon: <SlidersHorizontal size={20} weight="bold" /> },
 ];
 
 type DashboardSidebarProps = {

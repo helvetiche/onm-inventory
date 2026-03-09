@@ -3,10 +3,13 @@
 import type { JSX } from "react";
 import {
   ArrowsLeftRight,
+  Clock,
   NotePencil,
   Package,
+  TrendingDown,
   TrendDown,
   TrendUp,
+  Warehouse,
   WarningCircle,
 } from "@phosphor-icons/react";
 import type { DateRangeKey, TrendDirection } from "./DashboardShell";
@@ -19,44 +22,20 @@ type Stat = {
   id: string;
   label: string;
   value: string;
+  sub?: string;
   trend: TrendDirection;
   trendLabel: string;
   icon: JSX.Element;
 };
 
 const stats: Stat[] = [
-  {
-    id: "skus",
-    label: "Active SKUs",
-    value: "1,482",
-    trend: "up",
-    trendLabel: "+3.1%",
-    icon: <Package size={20} weight="bold" />,
-  },
-  {
-    id: "low",
-    label: "Low stock",
-    value: "37",
-    trend: "down",
-    trendLabel: "-12.4%",
-    icon: <WarningCircle size={20} weight="bold" />,
-  },
-  {
-    id: "pos",
-    label: "Open POs",
-    value: "12",
-    trend: "neutral",
-    trendLabel: "Stable",
-    icon: <NotePencil size={20} weight="bold" />,
-  },
-  {
-    id: "movements",
-    label: "Today movements",
-    value: "284",
-    trend: "up",
-    trendLabel: "+18.2%",
-    icon: <ArrowsLeftRight size={20} weight="bold" />,
-  },
+  { id: "skus", label: "Active SKUs", value: "2,847", sub: "across 12 cabinets", trend: "up", trendLabel: "+5.2%", icon: <Package size={20} weight="bold" /> },
+  { id: "low", label: "Low stock alerts", value: "43", sub: "below threshold", trend: "down", trendLabel: "-8.1%", icon: <WarningCircle size={20} weight="bold" /> },
+  { id: "pos", label: "Open purchase orders", value: "28", sub: "pending approval", trend: "up", trendLabel: "+12%", icon: <NotePencil size={20} weight="bold" /> },
+  { id: "movements", label: "Today movements", value: "1,247", sub: "inbound & outbound", trend: "up", trendLabel: "+22%", icon: <ArrowsLeftRight size={20} weight="bold" /> },
+  { id: "expiring", label: "Expiring in 30d", value: "156", sub: "items to rotate", trend: "down", trendLabel: "-4%", icon: <Clock size={20} weight="bold" /> },
+  { id: "zones", label: "Storage zones", value: "8", sub: "cold, dry, quarantine", trend: "neutral", trendLabel: "Stable", icon: <Warehouse size={20} weight="bold" /> },
+  { id: "variance", label: "Cycle count variance", value: "0.3%", sub: "within tolerance", trend: "down", trendLabel: "-0.1pp", icon: <TrendingDown size={20} weight="bold" /> },
 ];
 
 const trendClasses: Record<TrendDirection, string> = {
@@ -66,18 +45,12 @@ const trendClasses: Record<TrendDirection, string> = {
 };
 
 const TrendIcon = ({ direction }: { direction: TrendDirection }): JSX.Element | null =>
-  direction === "up" ? (
-    <TrendUp size={12} weight="bold" />
-  ) : direction === "down" ? (
-    <TrendDown size={12} weight="bold" />
-  ) : null;
+  direction === "up" ? <TrendUp size={12} weight="bold" /> : direction === "down" ? <TrendDown size={12} weight="bold" /> : null;
 
-export const DashboardAnalytics = ({
-  selectedRange,
-}: DashboardAnalyticsProps): JSX.Element => (
+export const DashboardAnalytics = ({ selectedRange }: DashboardAnalyticsProps): JSX.Element => (
   <section aria-label="Analytics" className="space-y-2">
     <h2 className="text-sm font-medium text-emerald-900">Analytics</h2>
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
       {stats.map((s) => (
         <div
           key={s.id}
@@ -86,9 +59,8 @@ export const DashboardAnalytics = ({
           <div>
             <p className="text-xs font-light text-slate-500">{s.label}</p>
             <p className="text-lg font-medium text-emerald-900">{s.value}</p>
-            <span
-              className={`mt-1 inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[10px] font-normal ${trendClasses[s.trend]}`}
-            >
+            {s.sub && <p className="text-[10px] text-slate-400">{s.sub}</p>}
+            <span className={`mt-1 inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[10px] font-normal ${trendClasses[s.trend]}`}>
               <TrendIcon direction={s.trend} />
               {s.trendLabel}
             </span>

@@ -13,7 +13,6 @@ import { DashboardCharts } from "./DashboardCharts";
 import { DashboardCabinets } from "./DashboardCabinets";
 import { DashboardAuditTrail } from "./DashboardAuditTrail";
 import { DashboardInsights } from "./DashboardInsights";
-import { DashboardShortcuts } from "./DashboardShortcuts";
 
 export type DateRangeKey = "today" | "7d" | "30d";
 
@@ -61,20 +60,12 @@ export type Insight = {
   severity: InsightSeverity;
 };
 
-export type Shortcut = {
-  id: string;
-  label: string;
-  description: string;
-  enabled: boolean;
-};
-
 const INITIAL_VISIBILITY: ComponentVisibility = {
   analytics: true,
   charts: true,
   cabinets: true,
   audit: true,
   insights: true,
-  shortcuts: true,
 };
 
 export const DashboardShell = (): JSX.Element => {
@@ -123,7 +114,6 @@ export const DashboardShell = (): JSX.Element => {
                 onChangeExpandedAuditId={setExpandedAuditId}
               />
             )}
-            {visibility.shortcuts && <DashboardShortcuts />}
           </div>
         </section>
       </div>
