@@ -1,8 +1,6 @@
 "use client";
 
 import {
-  useInfiniteQuery,
-  type UseInfiniteQueryResult,
   useMutation,
   type UseMutationResult,
   useQuery,
@@ -14,15 +12,16 @@ import { z } from "zod";
 
 export type ItemsQueryParams = {
   limit?: number;
-  cursor?: string | null;
+  page?: number;
   search?: string | null;
   category?: string | null;
 };
 
 export type ItemsPaginatedResponse = {
   items: InventoryItem[];
-  nextCursor: string | null;
-  hasMore: boolean;
+  page: number;
+  totalPages: number;
+  totalCount: number;
 };
 
 const itemsPaginatedSchema = z.object({
@@ -39,8 +38,9 @@ const itemsPaginatedSchema = z.object({
       updatedAt: z.coerce.date(),
     })
   ),
-  nextCursor: z.string().nullable(),
-  hasMore: z.boolean(),
+  page: z.number(),
+  totalPages: z.number(),
+  totalCount: z.number(),
 });
 
 const createItemInputSchema = z.object({
@@ -58,7 +58,7 @@ const fetchItemsPaginated = async (
 ): Promise<ItemsPaginatedResponse> => {
   const searchParams = new URLSearchParams();
   if (params.limit) searchParams.set("limit", String(params.limit));
-  if (params.cursor) searchParams.set("cursor", params.cursor);
+  if (params.page) searchParams.set("page", String(params.page));
   if (params.search) searchParams.set("search", params.search);
   if (params.category) searchParams.set("category", params.category);
 

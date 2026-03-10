@@ -17,6 +17,7 @@ import {
   useCategoriesQuery,
   useCreateItemMutation,
   type CreateItemInput,
+  type ItemsPaginatedResponse,
 } from "@/lib/hooks/use-items";
 import {
   useItemQuery,
@@ -27,13 +28,8 @@ import {
 import { ItemFormModal } from "./ItemFormModal";
 import { ItemDetailDrawer } from "./ItemDetailDrawer";
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 8;
 const SEARCH_DEBOUNCE_MS = 300;
-
-const formatDate = (d: Date): string =>
-  new Intl.DateTimeFormat("en-US", {
-    dateStyle: "short",
-  }).format(new Date(d));
 
 export function Items(): JSX.Element {
   const [searchInput, setSearchInput] = useState("");
@@ -61,7 +57,7 @@ export function Items(): JSX.Element {
   const toggleMutation = useToggleItemActiveMutation();
 
   const items: InventoryItem[] =
-    (data as { pages: { items: InventoryItem[] }[] } | undefined)?.pages?.flatMap(
+    (data as { pages: ItemsPaginatedResponse[] } | undefined)?.pages?.flatMap(
       (p) => p.items
     ) ?? [];
   const activeCount = items.filter((i) => i.isActive).length;
@@ -207,36 +203,45 @@ export function Items(): JSX.Element {
         {!isLoading && !error && items.length > 0 && (
           <>
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[640px]" role="grid">
+              <table
+                className="w-full min-w-[640px] table-fixed"
+                role="grid"
+              >
                 <thead>
-                  <tr className="border-b border-slate-100 bg-slate-50/50">
-                    {(
-                      [
-                        "sku",
-                        "name",
-                        "category",
-                        "unit",
-                        "status",
-                        "createdAt",
-                      ] as const
-                    ).map((field) => {
-                      const label =
-                        field === "createdAt"
-                          ? "Created"
-                          : field.charAt(0).toUpperCase() + field.slice(1);
-                      return (
-                        <th
-                          key={field}
-                          scope="col"
-                          className="px-6 py-3 text-left text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
-                        >
-                          {label}
-                        </th>
-                      );
-                    })}
+                  <tr className="border-b border-slate-200 bg-slate-50/50">
                     <th
                       scope="col"
-                      className="w-12 px-6 py-3 text-right text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
+                      className="w-[16%] border-r border-slate-200 px-4 py-3 text-left text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
+                    >
+                      SKU
+                    </th>
+                    <th
+                      scope="col"
+                      className="w-[16%] border-r border-slate-200 px-4 py-3 text-left text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
+                    >
+                      Name
+                    </th>
+                    <th
+                      scope="col"
+                      className="w-[16%] border-r border-slate-200 px-4 py-3 text-left text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
+                    >
+                      Category
+                    </th>
+                    <th
+                      scope="col"
+                      className="w-[16%] border-r border-slate-200 px-4 py-3 text-left text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
+                    >
+                      Unit
+                    </th>
+                    <th
+                      scope="col"
+                      className="w-[16%] border-r border-slate-200 px-4 py-3 text-left text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
+                    >
+                      Status
+                    </th>
+                    <th
+                      scope="col"
+                      className="w-[20%] px-4 py-3 text-right text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
                     >
                       Actions
                     </th>
@@ -248,21 +253,23 @@ export function Items(): JSX.Element {
                       key={item.id}
                       className="transition-colors hover:bg-slate-50/50"
                     >
-                      <td className="px-6 py-4">
-                        <span className="font-medium text-emerald-900">
+                      <td className="border-r border-slate-100 px-4 py-4">
+                        <span className="block truncate font-medium text-emerald-900">
                           {item.sku}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-[14px] text-emerald-900">
-                        {item.name}
+                      <td className="border-r border-slate-100 px-4 py-4 text-[14px] text-emerald-900">
+                        <span className="block truncate">{item.name}</span>
                       </td>
-                      <td className="px-6 py-4 text-[14px] text-slate-600">
-                        {item.category ?? "—"}
+                      <td className="border-r border-slate-100 px-4 py-4 text-[14px] text-slate-600">
+                        <span className="block truncate">
+                          {item.category ?? "—"}
+                        </span>
                       </td>
-                      <td className="px-6 py-4 text-[14px] text-slate-600">
+                      <td className="border-r border-slate-100 px-4 py-4 text-[14px] text-slate-600">
                         {item.unit}
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="border-r border-slate-100 px-4 py-4">
                         <span
                           className={`inline-flex items-center rounded-full px-2 py-0.5 text-[12px] font-medium ${
                             item.isActive
@@ -273,10 +280,7 @@ export function Items(): JSX.Element {
                           {item.isActive ? "Active" : "Inactive"}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-[14px] text-slate-600">
-                        {formatDate(item.createdAt)}
-                      </td>
-                      <td className="relative px-6 py-4 text-right">
+                      <td className="relative px-4 py-4 text-right">
                         <div className="flex items-center justify-end gap-1">
                           <button
                             type="button"

@@ -33,15 +33,16 @@ export type CreateMovementInput = {
 
 export type GetItemsPaginatedParams = {
   limit: number;
-  cursor?: string | null;
+  page: number;
   search?: string | null;
   category?: string | null;
 };
 
 export type GetItemsPaginatedResult = {
   items: FirestoreDocument[];
-  nextCursor: string | null;
-  hasMore: boolean;
+  page: number;
+  totalPages: number;
+  totalCount: number;
 };
 
 export interface InventoryDb {
@@ -149,8 +150,9 @@ const updateItemInputSchema = createItemInputSchema.partial();
 
 export type ItemsPaginatedResult = {
   items: InventoryItem[];
-  nextCursor: string | null;
-  hasMore: boolean;
+  page: number;
+  totalPages: number;
+  totalCount: number;
 };
 
 export interface InventoryRepository {
@@ -193,56 +195,61 @@ const createInventoryDb = (): InventoryDb => {
     };
   };
 
+  const buildItemsQuery = (
+    searchTrimmed: string | null,
+    categoryTrimmed: string | null
+  ) => {
+    const col = db.collection(ITEMS_COLLECTION);
+    if (categoryTrimmed && searchTrimmed) {
+      return col
+        .where("category", "==", categoryTrimmed)
+        .where("name", ">=", searchTrimmed)
+        .where("name", "<=", searchTrimmed + "\uf8ff")
+        .orderBy("name", "asc");
+    }
+    if (categoryTrimmed) {
+      return col
+        .where("category", "==", categoryTrimmed)
+        .orderBy("name", "asc");
+    }
+    if (searchTrimmed) {
+      return col
+        .where("name", ">=", searchTrimmed)
+        .where("name", "<=", searchTrimmed + "\uf8ff")
+        .orderBy("name", "asc");
+    }
+    return col.orderBy("name", "asc");
+  };
+
   const getItemsPaginated = async (
     params: GetItemsPaginatedParams
   ): Promise<GetItemsPaginatedResult> => {
-    const { limit, cursor, search, category } = params;
+    const { limit, page, search, category } = params;
     const pageSize = Math.min(Math.max(1, limit), 100);
-    const fetchLimit = pageSize + 1;
-    const searchTrimmed = search?.trim();
-    const categoryTrimmed = category?.trim();
+    const pageNum = Math.max(1, page);
+    const searchTrimmed = search?.trim() || null;
+    const categoryTrimmed = category?.trim() || null;
 
-    const col = db.collection(ITEMS_COLLECTION);
-    let query = col.orderBy("name", "asc");
+    const query = buildItemsQuery(searchTrimmed, categoryTrimmed);
 
-    if (categoryTrimmed && searchTrimmed) {
-      query = col
-        .where("category", "==", categoryTrimmed)
-        .where("name", ">=", searchTrimmed)
-        .where("name", "<=", searchTrimmed + "\uf8ff")
-        .orderBy("name", "asc");
-    } else if (categoryTrimmed) {
-      query = col
-        .where("category", "==", categoryTrimmed)
-        .orderBy("name", "asc");
-    } else if (searchTrimmed) {
-      query = col
-        .where("name", ">=", searchTrimmed)
-        .where("name", "<=", searchTrimmed + "\uf8ff")
-        .orderBy("name", "asc");
-    } else {
-      query = col.orderBy("name", "asc");
-    }
+    const [countSnapshot, dataSnapshot] = await Promise.all([
+      query.count().get(),
+      query.limit(pageNum * pageSize).get(),
+    ]);
 
-    if (cursor?.trim()) {
-      const cursorDoc = await db.collection(ITEMS_COLLECTION).doc(cursor).get();
-      if (cursorDoc.exists) {
-        query = query.startAfter(cursorDoc);
-      }
-    }
-
-    const snapshot = await query.limit(fetchLimit).get();
-    const docs = snapshot.docs;
-    const hasMore = docs.length > pageSize;
-    const resultDocs = hasMore ? docs.slice(0, pageSize) : docs;
+    const totalCount = countSnapshot.data().count;
+    const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+    const offset = (pageNum - 1) * pageSize;
+    const docs = dataSnapshot.docs.slice(offset, offset + pageSize);
 
     return {
-      items: resultDocs.map((doc) => ({
+      items: docs.map((doc) => ({
         id: doc.id,
         data: doc.data(),
       })),
-      nextCursor: hasMore ? resultDocs[resultDocs.length - 1].id : null,
-      hasMore,
+      page: pageNum,
+      totalPages,
+      totalCount,
     };
   };
 
@@ -453,8 +460,9 @@ export const createInventoryRepository = (
       items: result.items.map((doc) =>
         firestoreItemToDomain(doc.id, doc.data)
       ),
-      nextCursor: result.nextCursor,
-      hasMore: result.hasMore,
+      page: result.page,
+      totalPages: result.totalPages,
+      totalCount: result.totalCount,
     };
   };
 

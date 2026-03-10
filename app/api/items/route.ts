@@ -10,18 +10,19 @@ const createItemBodySchema = z.object({
   unit: z.string().min(1),
 });
 
-const limitSchema = z.coerce.number().min(1).max(100).default(20);
+const limitSchema = z.coerce.number().min(1).max(100).default(8);
+const pageSchema = z.coerce.number().min(1).default(1);
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const { searchParams } = new URL(request.url);
-  const limit = limitSchema.parse(searchParams.get("limit") ?? 20);
-  const cursor = searchParams.get("cursor") ?? undefined;
+  const limit = limitSchema.parse(searchParams.get("limit") ?? 8);
+  const page = pageSchema.parse(searchParams.get("page") ?? 1);
   const search = searchParams.get("search") ?? undefined;
   const category = searchParams.get("category") ?? undefined;
 
   const result = await getItemsPaginated({
     limit,
-    cursor: cursor || null,
+    page,
     search: search || null,
     category: category || null,
   });
