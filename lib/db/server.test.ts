@@ -20,6 +20,9 @@ const createFakeDb = (): InventoryDb => {
     async getLevelsByItemId() {
       return [];
     },
+    async getMovementsByItemId() {
+      return [];
+    },
     async createItem(data) {
       const id = `test-${items.length + 1}`;
       const record = { id, data };
@@ -27,6 +30,15 @@ const createFakeDb = (): InventoryDb => {
       items.push(record);
 
       return { ...record };
+    },
+    async updateItem(id, data) {
+      const idx = items.findIndex((item) => item.id === id);
+      if (idx === -1) throw new Error("Item not found");
+      items[idx].data = { ...items[idx].data, ...data };
+      return { id: items[idx].id, data: items[idx].data };
+    },
+    async createMovementTransaction() {
+      throw new Error("Not implemented in test");
     },
   };
 };
