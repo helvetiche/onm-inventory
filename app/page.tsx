@@ -1,6 +1,6 @@
 import type { JSX } from "react";
 import { Suspense } from "react";
-import { Sidebar } from "@/app/components/Sidebar";
+import { SidebarLayout } from "@/app/components/SidebarLayout";
 import { TabContent } from "@/app/components/TabContent";
 
 type PageProps = {
@@ -12,18 +12,10 @@ export default async function Home({ searchParams }: PageProps): Promise<JSX.Ele
   const tab = params.tab ?? "dashboard";
 
   return (
-    <div className="flex min-h-screen bg-white">
-      <Suspense fallback={<aside className="w-80 shrink-0" aria-hidden />}>
-        <Sidebar />
+    <SidebarLayout>
+      <Suspense fallback={<div className="p-6">Loading...</div>}>
+        <TabContent tab={tab} />
       </Suspense>
-      <main
-        className="flex-1 bg-white pl-80"
-        role="main"
-      >
-        <Suspense fallback={<div className="p-6">Loading...</div>}>
-          <TabContent tab={tab} />
-        </Suspense>
-      </main>
-    </div>
+    </SidebarLayout>
   );
 }

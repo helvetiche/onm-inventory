@@ -110,9 +110,16 @@ export function Sidebar({
   const activeTab = getActiveTab(searchParams);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const filteredTabs = useMemo(() => {
-    return ALL_TABS.filter((tab) => matchesSearch(searchQuery, tab));
-  }, [searchQuery]);
+  const filteredInventoryTabs = useMemo(
+    () => INVENTORY_TABS.filter((tab) => matchesSearch(searchQuery, tab)),
+    [searchQuery]
+  );
+  const filteredSystemTabs = useMemo(
+    () => SYSTEM_TABS.filter((tab) => matchesSearch(searchQuery, tab)),
+    [searchQuery]
+  );
+  const hasAnyResults =
+    filteredInventoryTabs.length > 0 || filteredSystemTabs.length > 0;
 
   const isActive = (tabId: SidebarTabId) => activeTab === tabId;
 
@@ -122,16 +129,13 @@ export function Sidebar({
 
   return (
     <aside
-      className="fixed inset-y-0 left-0 z-20 flex flex-col border-r border-slate-100 bg-white shadow-[4px_0_24px_-4px_rgba(0,0,0,0.04)] transition-[width] duration-200 ease-in-out"
-      style={{ width: isIconOnly ? "6rem" : "20rem" }}
+      className="fixed inset-y-0 left-0 z-20 flex w-80 flex-col border-r border-slate-100 bg-white shadow-[4px_0_24px_-4px_rgba(0,0,0,0.04)]"
       aria-label="Inventory navigation"
     >
       <div className="flex h-16 shrink-0 items-center justify-between border-b border-slate-100 px-4">
-        {!isIconOnly && (
-          <span className="truncate text-[15px] font-medium tracking-tight text-emerald-900">
-            ONM Inventory
-          </span>
-        )}
+        <span className="truncate text-[15px] font-medium tracking-tight text-emerald-900">
+          ONM Inventory
+        </span>
         <button
           type="button"
           onClick={onToggleIconOnly}
@@ -146,43 +150,53 @@ export function Sidebar({
         </button>
       </div>
 
-      {!isIconOnly && (
-        <div className="shrink-0 border-b border-slate-100 px-3 py-3">
-          <div className="relative">
-            <MagnifyingGlass
-              size={18}
-              weight="regular"
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-900/50"
-              aria-hidden
-            />
-            <input
-              type="search"
-              placeholder="Search..."
-              value={searchQuery}
-              onChange={handleSearchChange}
-              className="w-full rounded-md border border-slate-200 bg-slate-50/50 py-2 pl-9 pr-3 text-[14px] text-emerald-900 placeholder:text-emerald-900/40 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-              aria-label="Search navigation"
-            />
-          </div>
+      <div className="shrink-0 border-b border-slate-100 px-3 py-3">
+        <div className="relative">
+          <MagnifyingGlass
+            size={18}
+            weight="regular"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-900/50"
+            aria-hidden
+          />
+          <input
+            type="search"
+            placeholder="Search..."
+            value={searchQuery}
+            onChange={handleSearchChange}
+            className="w-full rounded-md border border-slate-200 bg-slate-50/50 py-2 pl-9 pr-3 text-[14px] text-emerald-900 placeholder:text-emerald-900/40 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+            aria-label="Search navigation"
+          />
         </div>
-      )}
+      </div>
 
       <nav
         className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-3 py-4"
         role="navigation"
       >
         {isIconOnly ? (
-          <div className="grid grid-cols-3 gap-2">
-            {filteredTabs.map((tab) => {
+          <div className="grid grid-cols-3 gap-x-2 gap-y-3">
+            {[...filteredInventoryTabs, ...filteredSystemTabs].map((tab) => {
               const Icon = tab.icon;
               const active = isActive(tab.id);
+              const shortLabel =
+                tab.id === "dashboard"
+                  ? "Dash"
+                  : tab.id === "movements"
+                    ? "Move"
+                    : tab.id === "locations"
+                      ? "Loc"
+                      : tab.id === "reports"
+                        ? "Report"
+                        : tab.id === "settings"
+                          ? "Set"
+                          : tab.label;
 
               return (
                 <Link
                   key={tab.id}
                   href={pathname === "/" ? tab.href : `/?tab=${tab.id}`}
                   title={tab.label}
-                  className={`flex flex-col items-center gap-1 rounded-md p-2 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:ring-offset-2 ${
+                  className={`flex min-w-0 flex-col items-center gap-1.5 rounded-md px-1 py-2 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:ring-offset-2 ${
                     active
                       ? "bg-emerald-50/50"
                       : "hover:bg-emerald-50/50"
@@ -191,19 +205,19 @@ export function Sidebar({
                   aria-label={tab.label}
                 >
                   <div
-                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${
+                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${
                       active ? "bg-emerald-900" : "bg-emerald-900/80"
                     }`}
                   >
                     <Icon
-                      size={16}
+                      size={18}
                       weight={active ? "fill" : "regular"}
                       className="text-white"
                       aria-hidden
                     />
                   </div>
-                  <span className="truncate max-w-full text-[10px] text-emerald-900">
-                    {tab.label}
+                  <span className="min-w-0 truncate text-center text-[11px] leading-tight text-emerald-900">
+                    {shortLabel}
                   </span>
                 </Link>
               );
@@ -211,18 +225,16 @@ export function Sidebar({
           </div>
         ) : (
           <>
-            {filteredTabs.length > 0 && (
+            {hasAnyResults && (
               <>
-                <div className="mb-1 px-3 py-1.5">
-                  <span className="text-[11px] font-medium uppercase tracking-wider text-emerald-900/50">
-                    {INVENTORY_TABS.some((t) =>
-                      filteredTabs.some((f) => f.id === t.id)
-                    )
-                      ? "Inventory"
-                      : "System"}
-                  </span>
-                </div>
-                {filteredTabs.map((tab) => {
+                {filteredInventoryTabs.length > 0 && (
+                  <>
+                    <div className="mb-1 px-3 py-1.5">
+                      <span className="text-[11px] font-medium uppercase tracking-wider text-emerald-900/50">
+                        Inventory
+                      </span>
+                    </div>
+                    {filteredInventoryTabs.map((tab) => {
                   const Icon = tab.icon;
                   const active = isActive(tab.id);
 
@@ -271,9 +283,69 @@ export function Sidebar({
                     </Link>
                   );
                 })}
+                  </>
+                )}
+                {filteredSystemTabs.length > 0 && (
+                  <>
+                    <div className="mt-4 mb-1 px-3 py-1.5">
+                      <span className="text-[11px] font-medium uppercase tracking-wider text-emerald-900/50">
+                        System
+                      </span>
+                    </div>
+                    {filteredSystemTabs.map((tab) => {
+                      const Icon = tab.icon;
+                      const active = isActive(tab.id);
+
+                      return (
+                        <Link
+                          key={tab.id}
+                          href={pathname === "/" ? tab.href : `/?tab=${tab.id}`}
+                          className={`relative flex items-start gap-3 rounded-md px-4 py-3 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:ring-offset-2 ${
+                            active
+                              ? "bg-emerald-50/50 text-emerald-900"
+                              : "text-emerald-900/80 hover:bg-emerald-50/50"
+                          }`}
+                          aria-current={active ? "page" : undefined}
+                        >
+                          {active && (
+                            <span
+                              className="absolute -left-3 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full bg-emerald-900"
+                              aria-hidden
+                            />
+                          )}
+                          <div className="flex gap-3">
+                            <div
+                              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-emerald-900"
+                              aria-hidden
+                            >
+                              <Icon
+                                size={18}
+                                weight={active ? "fill" : "regular"}
+                                className="text-white"
+                                aria-hidden
+                              />
+                            </div>
+                            <div className="flex min-w-0 flex-col gap-0.5">
+                              <span className="text-[14px] font-normal tracking-[0.01em]">
+                                {tab.label}
+                              </span>
+                              <span
+                                className={`text-[12px] leading-snug ${
+                                  active ? "text-emerald-900/70" : "text-emerald-900/60"
+                                }`}
+                              >
+                                {tab.description}
+                              </span>
+                            </div>
+                          </div>
+                        </Link>
+                      );
+                    })}
+                  </>
+                )}
               </>
             )}
-            {filteredTabs.length === 0 && (
+            {!hasAnyResults && (
               <p className="px-4 py-6 text-[13px] text-emerald-900/60">
                 No results for &quot;{searchQuery}&quot;
               </p>

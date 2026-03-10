@@ -1,7 +1,7 @@
 "use client";
 
 import type { JSX, ReactNode } from "react";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { Sidebar } from "@/app/components/Sidebar";
 
 type SidebarLayoutProps = {
@@ -13,13 +13,14 @@ export function SidebarLayout({ children }: SidebarLayoutProps): JSX.Element {
 
   return (
     <div className="flex min-h-screen bg-white">
-      <Sidebar
+      <Suspense fallback={<aside className="w-80 shrink-0" aria-hidden />}>
+        <Sidebar
         isIconOnly={isIconOnly}
         onToggleIconOnly={() => setIsIconOnly((prev) => !prev)}
-      />
+        />
+      </Suspense>
       <main
-        className="flex-1 bg-white transition-[padding] duration-200 ease-in-out"
-        style={{ paddingLeft: isIconOnly ? "6rem" : "20rem" }}
+        className="flex-1 bg-white pl-80"
         role="main"
       >
         {children}
