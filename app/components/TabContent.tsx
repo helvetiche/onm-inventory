@@ -4,13 +4,41 @@ type TabContentProps = {
   tab: string;
 };
 
-const VALID_TABS = ["dashboard", "items", "stock", "movements"] as const;
+const VALID_TABS = [
+  "dashboard",
+  "items",
+  "stock",
+  "movements",
+  "locations",
+  "reports",
+  "settings",
+] as const;
 
 const TAB_HEADINGS: Record<string, string> = {
   dashboard: "Dashboard",
   items: "Items",
   stock: "Stock",
   movements: "Movements",
+  locations: "Locations",
+  reports: "Reports",
+  settings: "Settings",
+};
+
+const TAB_DESCRIPTIONS: Record<string, string> = {
+  dashboard:
+    "Overview of your inventory. Add widgets and quick stats here.",
+  items:
+    "Manage inventory items (SKU, name, category, unit). Add and edit items here.",
+  stock:
+    "View and manage stock levels by location. Monitor quantities and safety stock.",
+  movements:
+    "Track IN, OUT, and ADJUSTMENT movements. View movement history.",
+  locations:
+    "Manage warehouses, stores, and storage locations. Configure where inventory is held.",
+  reports:
+    "Generate reports, export data, and view analytics across your inventory.",
+  settings:
+    "Configure preferences, users, notifications, and application settings.",
 };
 
 export function TabContent({ tab }: TabContentProps): JSX.Element {
@@ -27,14 +55,7 @@ export function TabContent({ tab }: TabContentProps): JSX.Element {
       </h1>
       <div className="rounded-lg border border-slate-100 bg-white p-6 shadow-[0_1px_3px_0_rgba(0,0,0,0.05)]">
         <p className="text-[14px] leading-relaxed text-slate-500">
-          {validTab === "dashboard" &&
-            "Overview of your inventory. Add widgets and quick stats here."}
-          {validTab === "items" &&
-            "Manage inventory items (SKU, name, category, unit). Add and edit items here."}
-          {validTab === "stock" &&
-            "View and manage stock levels by location. Monitor quantities and safety stock."}
-          {validTab === "movements" &&
-            "Track IN, OUT, and ADJUSTMENT movements. View movement history."}
+          {TAB_DESCRIPTIONS[validTab]}
         </p>
       </div>
     </div>

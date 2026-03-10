@@ -156,6 +156,60 @@ export function Sidebar(): JSX.Element {
             </Link>
           );
         })}
+        <div className="mt-4 mb-1 px-3 py-1.5">
+          <span className="text-[11px] font-medium uppercase tracking-wider text-emerald-900/50">
+            System
+          </span>
+        </div>
+        {SYSTEM_TABS.map((tab) => {
+          const Icon = tab.icon;
+          const active = isActive(tab.id);
+
+          return (
+            <Link
+              key={tab.id}
+              href={pathname === "/" ? tab.href : `/?tab=${tab.id}`}
+              className={`relative flex items-start gap-3 rounded-md px-4 py-3 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:ring-offset-2 ${
+                active
+                  ? "bg-emerald-50/50 text-emerald-900"
+                  : "text-emerald-900/80 hover:bg-emerald-50/50"
+              }`}
+              aria-current={active ? "page" : undefined}
+            >
+              {active && (
+                <span
+                  className="absolute -left-3 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full bg-emerald-900"
+                  aria-hidden
+                />
+              )}
+              <div className="flex gap-3">
+                <div
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-emerald-900"
+                  aria-hidden
+                >
+                  <Icon
+                    size={18}
+                    weight={active ? "fill" : "regular"}
+                    className="text-white"
+                    aria-hidden
+                  />
+                </div>
+                <div className="flex min-w-0 flex-col gap-0.5">
+                  <span className="text-[14px] font-normal tracking-[0.01em]">
+                    {tab.label}
+                  </span>
+                  <span
+                    className={`text-[12px] leading-snug ${
+                      active ? "text-emerald-900/70" : "text-emerald-900/60"
+                    }`}
+                  >
+                    {tab.description}
+                  </span>
+                </div>
+              </div>
+            </Link>
+          );
+        })}
       </nav>
     </aside>
   );
