@@ -9,7 +9,7 @@ import {
   Eye,
   PencilSimple,
   Archive,
-  ArchiveBox,
+  Package,
   CaretUp,
   CaretDown,
 } from "@phosphor-icons/react";
@@ -130,17 +130,17 @@ export function Items(): JSX.Element {
     }
   };
 
-  const handleCreateSubmit = (values: CreateItemInput) => {
-    createMutation.mutate(values, {
+  const handleCreateSubmit = (values: CreateItemInput | UpdateItemInput) => {
+    createMutation.mutate(values as CreateItemInput, {
       onSuccess: () => {
         setIsCreateModalOpen(false);
       },
     });
   };
 
-  const handleEditSubmit = (values: UpdateItemInput) => {
+  const handleEditSubmit = (values: CreateItemInput | UpdateItemInput) => {
     if (!editItemId) return;
-    updateMutation.mutate(values, {
+    updateMutation.mutate(values as UpdateItemInput, {
       onSuccess: () => {
         setEditItemId(null);
         setDetailItemId(null);
@@ -391,7 +391,7 @@ export function Items(): JSX.Element {
                                     </>
                                   ) : (
                                     <>
-                                      <ArchiveBox size={16} weight="regular" aria-hidden />
+                                      <Package size={16} weight="regular" aria-hidden />
                                       Activate
                                     </>
                                   )}
