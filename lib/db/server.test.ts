@@ -7,6 +7,8 @@ import {
 
 const createFakeDb = (): InventoryDb => {
   const items: Array<{ id: string; data: Record<string, unknown> }> = [];
+  const movements: Array<{ id: string; data: Record<string, unknown> }> = [];
+  const levelsByItemId = new Map<string, { id: string; data: Record<string, unknown> }>();
 
   return {
     async getAllItems() {
@@ -17,8 +19,14 @@ const createFakeDb = (): InventoryDb => {
 
       return found ? { ...found } : null;
     },
-    async getLevelsByItemId() {
-      return [];
+    async getLevelsByItemId(itemId) {
+      const level = levelsByItemId.get(itemId);
+      return level ? [{ ...level }] : [];
+    },
+    async getMovementsByItemId(itemId) {
+      return movements
+        .filter((movement) => movement.data.itemId === itemId)
+        .map((movement) => ({ ...movement }));
     },
     async createItem(data) {
       const id = `test-${items.length + 1}`;
@@ -27,6 +35,39 @@ const createFakeDb = (): InventoryDb => {
       items.push(record);
 
       return { ...record };
+    },
+    async createMovementTransaction(input) {
+      const movementRecord = {
+        id: `movement-${movements.length + 1}`,
+        data: {
+          ...input,
+          createdAt: new Date(),
+        },
+      };
+      const currentLevel = levelsByItemId.get(input.itemId);
+      const previousQuantity =
+        typeof currentLevel?.data.quantity === "number" ? currentLevel.data.quantity : 0;
+      const nextQuantity =
+        input.type === "in"
+          ? previousQuantity + input.quantity
+          : Math.max(previousQuantity - input.quantity, 0);
+      const levelRecord = {
+        id: currentLevel?.id ?? `level-${levelsByItemId.size + 1}`,
+        data: {
+          itemId: input.itemId,
+          locationId: input.locationId,
+          quantity: nextQuantity,
+          updatedAt: new Date(),
+        },
+      };
+
+      movements.push(movementRecord);
+      levelsByItemId.set(input.itemId, levelRecord);
+
+      return {
+        movement: { ...movementRecord },
+        level: { ...levelRecord },
+      };
     },
   };
 };
