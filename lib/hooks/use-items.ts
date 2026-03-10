@@ -1,6 +1,8 @@
 "use client";
 
 import {
+  useInfiniteQuery,
+  type UseInfiniteQueryResult,
   useMutation,
   type UseMutationResult,
   useQuery,
@@ -99,10 +101,46 @@ const createItemRequest = async (
   return json as InventoryItem;
 };
 
-export const useItemsQuery = (): UseQueryResult<InventoryItem[]> => {
+const ITEMS_PAGE_SIZE = 20;
+
+export const useItemsQuery = (
+  params: ItemsQueryParams = {}
+): UseQueryResult<ItemsPaginatedResponse> => {
+  const { limit = ITEMS_PAGE_SIZE, cursor, search, category } = params;
   return useQuery({
-    queryKey: ["items"],
-    queryFn: fetchItems,
+    queryKey: ["items", { limit, cursor, search, category }],
+    queryFn: () =>
+      fetchItemsPaginated({
+        limit,
+        cursor: cursor ?? null,
+        search: search ?? null,
+        category: category ?? null,
+      }),
+  });
+};
+
+export const useItemsInfiniteQuery = (
+  params: Omit<ItemsQueryParams, "cursor"> = {}
+): UseInfiniteQueryResult<ItemsPaginatedResponse, Error> => {
+  const { limit = ITEMS_PAGE_SIZE, search, category } = params;
+  return useInfiniteQuery({
+    queryKey: ["items", "infinite", { limit, search, category }],
+    queryFn: ({ pageParam }) =>
+      fetchItemsPaginated({
+        limit,
+        cursor: pageParam as string | null,
+        search: search ?? null,
+        category: category ?? null,
+      }),
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) => lastPage.nextCursor,
+  });
+};
+
+export const useCategoriesQuery = (): UseQueryResult<string[]> => {
+  return useQuery({
+    queryKey: ["items", "categories"],
+    queryFn: fetchCategories,
   });
 };
 
