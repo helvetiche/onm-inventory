@@ -17,6 +17,12 @@ const createFakeDb = (): InventoryDb => {
 
       return found ? { ...found } : null;
     },
+    async getItemsPaginated() {
+      return { items: [], nextCursor: null, hasMore: false };
+    },
+    async getCategories() {
+      return [];
+    },
     async getLevelsByItemId() {
       return [];
     },

@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { NextResponse } from "next/server";
-import { createItem, getAllItems } from "@/lib/db/server";
+import { NextRequest, NextResponse } from "next/server";
+import { createItem, getItemsPaginated } from "@/lib/db/server";
 
 const createItemBodySchema = z.object({
   sku: z.string().min(1),
@@ -10,10 +10,23 @@ const createItemBodySchema = z.object({
   unit: z.string().min(1),
 });
 
-export async function GET(): Promise<NextResponse> {
-  const items = await getAllItems();
+const limitSchema = z.coerce.number().min(1).max(100).default(20);
 
-  return NextResponse.json(items);
+export async function GET(request: NextRequest): Promise<NextResponse> {
+  const { searchParams } = new URL(request.url);
+  const limit = limitSchema.parse(searchParams.get("limit") ?? 20);
+  const cursor = searchParams.get("cursor") ?? undefined;
+  const search = searchParams.get("search") ?? undefined;
+  const category = searchParams.get("category") ?? undefined;
+
+  const result = await getItemsPaginated({
+    limit,
+    cursor: cursor || null,
+    search: search || null,
+    category: category || null,
+  });
+
+  return NextResponse.json(result);
 }
 
 export async function POST(request: Request): Promise<NextResponse> {

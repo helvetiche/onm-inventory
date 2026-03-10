@@ -445,6 +445,23 @@ export const createInventoryRepository = (
     return firestoreItemToDomain(doc.id, doc.data);
   };
 
+  const getItemsPaginated = async (
+    params: GetItemsPaginatedParams
+  ): Promise<ItemsPaginatedResult> => {
+    const result = await db.getItemsPaginated(params);
+    return {
+      items: result.items.map((doc) =>
+        firestoreItemToDomain(doc.id, doc.data)
+      ),
+      nextCursor: result.nextCursor,
+      hasMore: result.hasMore,
+    };
+  };
+
+  const getCategories = async (): Promise<string[]> => {
+    return db.getCategories();
+  };
+
   const createItem = async (
     input: CreateItemInput
   ): Promise<InventoryItem> => {
@@ -514,6 +531,8 @@ export const createInventoryRepository = (
   return {
     getAllItems,
     getItemById,
+    getItemsPaginated,
+    getCategories,
     createItem,
     updateItem,
     toggleItemActive,
@@ -521,6 +540,18 @@ export const createInventoryRepository = (
     createMovement,
     getMovementsForItem,
   };
+};
+
+export const getItemsPaginated = async (
+  params: GetItemsPaginatedParams
+): Promise<ItemsPaginatedResult> => {
+  const repository = createInventoryRepository(createInventoryDb());
+  return repository.getItemsPaginated(params);
+};
+
+export const getCategories = async (): Promise<string[]> => {
+  const repository = createInventoryRepository(createInventoryDb());
+  return repository.getCategories();
 };
 
 export const getAllItems = async (): Promise<InventoryItem[]> => {
