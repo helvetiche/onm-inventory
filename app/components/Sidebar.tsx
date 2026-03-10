@@ -200,8 +200,8 @@ export function Sidebar({
                         key={tab.id}
                         href={pathname === "/" ? tab.href : `/?tab=${tab.id}`}
                         title={tab.label}
-                        className={`flex min-w-0 flex-col items-center gap-1.5 rounded-md px-1 py-2 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:ring-offset-2 ${
-                          active ? "bg-emerald-50/50" : "hover:bg-emerald-50/50"
+                        className={`flex min-w-0 flex-col items-center gap-1.5 border-l-[5px] px-1 py-2 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:ring-offset-2 ${
+                          active ? "rounded-none border-l-emerald-900 bg-gray-100" : "rounded-md border-l-transparent hover:bg-emerald-50/50"
                         }`}
                         aria-current={active ? "page" : undefined}
                         aria-label={tab.label}
@@ -246,8 +246,8 @@ export function Sidebar({
                         key={tab.id}
                         href={pathname === "/" ? tab.href : `/?tab=${tab.id}`}
                         title={tab.label}
-                        className={`flex min-w-0 flex-col items-center gap-1.5 rounded-md px-1 py-2 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:ring-offset-2 ${
-                          active ? "bg-emerald-50/50" : "hover:bg-emerald-50/50"
+                        className={`flex min-w-0 flex-col items-center gap-1.5 border-l-[5px] px-1 py-2 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:ring-offset-2 ${
+                          active ? "rounded-none border-l-emerald-900 bg-gray-100" : "rounded-md border-l-transparent hover:bg-emerald-50/50"
                         }`}
                         aria-current={active ? "page" : undefined}
                         aria-label={tab.label}
@@ -298,19 +298,13 @@ export function Sidebar({
                     <Link
                       key={tab.id}
                       href={pathname === "/" ? tab.href : `/?tab=${tab.id}`}
-                      className={`relative flex items-start gap-3 rounded-md px-4 py-3 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:ring-offset-2 ${
+                      className={`flex items-start gap-3 border-l-[5px] px-4 py-3 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:ring-offset-2 ${
                         active
-                          ? "bg-emerald-50/50 text-emerald-900"
-                          : "text-emerald-900/80 hover:bg-emerald-50/50"
+                          ? "rounded-none border-l-emerald-900 bg-gray-100 text-emerald-900"
+                          : "rounded-md border-l-transparent text-emerald-900/80 hover:bg-emerald-50/50"
                       }`}
                       aria-current={active ? "page" : undefined}
                     >
-                      {active && (
-                        <span
-                          className="absolute -left-3 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full bg-emerald-900"
-                          aria-hidden
-                        />
-                      )}
                       <div className="flex gap-3">
                         <div
                           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-emerald-900"
@@ -356,19 +350,13 @@ export function Sidebar({
                         <Link
                           key={tab.id}
                           href={pathname === "/" ? tab.href : `/?tab=${tab.id}`}
-                          className={`relative flex items-start gap-3 rounded-md px-4 py-3 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:ring-offset-2 ${
+                          className={`flex items-start gap-3 border-l-[5px] px-4 py-3 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:ring-offset-2 ${
                             active
-                              ? "bg-emerald-50/50 text-emerald-900"
-                              : "text-emerald-900/80 hover:bg-emerald-50/50"
+                              ? "rounded-none border-l-emerald-900 bg-gray-100 text-emerald-900"
+                              : "rounded-md border-l-transparent text-emerald-900/80 hover:bg-emerald-50/50"
                           }`}
                           aria-current={active ? "page" : undefined}
                         >
-                          {active && (
-                            <span
-                              className="absolute -left-3 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full bg-emerald-900"
-                              aria-hidden
-                            />
-                          )}
                           <div className="flex gap-3">
                             <div
                               className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-emerald-900"
