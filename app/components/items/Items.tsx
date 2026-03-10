@@ -10,14 +10,15 @@ import {
   PencilSimple,
   Archive,
   Package,
+  CaretLeft,
+  CaretRight,
 } from "@phosphor-icons/react";
 import type { InventoryItem } from "@/lib/db/types";
 import {
-  useItemsInfiniteQuery,
+  useItemsQuery,
   useCategoriesQuery,
   useCreateItemMutation,
   type CreateItemInput,
-  type ItemsPaginatedResponse,
 } from "@/lib/hooks/use-items";
 import {
   useItemQuery,

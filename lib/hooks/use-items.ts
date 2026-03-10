@@ -101,39 +101,26 @@ const createItemRequest = async (
   return json as InventoryItem;
 };
 
-const ITEMS_PAGE_SIZE = 20;
+const ITEMS_PAGE_SIZE = 8;
 
 export const useItemsQuery = (
   params: ItemsQueryParams = {}
 ): UseQueryResult<ItemsPaginatedResponse> => {
-  const { limit = ITEMS_PAGE_SIZE, cursor, search, category } = params;
+  const {
+    limit = ITEMS_PAGE_SIZE,
+    page = 1,
+    search,
+    category,
+  } = params;
   return useQuery({
-    queryKey: ["items", { limit, cursor, search, category }],
+    queryKey: ["items", { limit, page, search, category }],
     queryFn: () =>
       fetchItemsPaginated({
         limit,
-        cursor: cursor ?? null,
+        page,
         search: search ?? null,
         category: category ?? null,
       }),
-  });
-};
-
-export const useItemsInfiniteQuery = (
-  params: Omit<ItemsQueryParams, "cursor"> = {}
-): UseInfiniteQueryResult<ItemsPaginatedResponse, Error> => {
-  const { limit = ITEMS_PAGE_SIZE, search, category } = params;
-  return useInfiniteQuery({
-    queryKey: ["items", "infinite", { limit, search, category }],
-    queryFn: ({ pageParam }) =>
-      fetchItemsPaginated({
-        limit,
-        cursor: pageParam as string | null,
-        search: search ?? null,
-        category: category ?? null,
-      }),
-    initialPageParam: null as string | null,
-    getNextPageParam: (lastPage) => lastPage.nextCursor,
   });
 };
 
