@@ -1,4 +1,10 @@
 import type { JSX } from "react";
+import dynamic from "next/dynamic";
+
+const Items = dynamic(
+  () => import("@/app/components/items/Items").then((m) => ({ default: m.Items })),
+  { ssr: false }
+);
 
 type TabContentProps = {
   tab: string;
