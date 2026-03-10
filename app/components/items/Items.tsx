@@ -61,7 +61,9 @@ export function Items(): JSX.Element {
   const toggleMutation = useToggleItemActiveMutation();
 
   const items: InventoryItem[] =
-    data?.pages?.flatMap((p) => p.items) ?? [];
+    (data as { pages: { items: InventoryItem[] }[] } | undefined)?.pages?.flatMap(
+      (p) => p.items
+    ) ?? [];
   const activeCount = items.filter((i) => i.isActive).length;
 
   useEffect(() => {
