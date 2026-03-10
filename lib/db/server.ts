@@ -191,31 +191,28 @@ const createInventoryDb = (): InventoryDb => {
     const { limit, cursor, search, category } = params;
     const pageSize = Math.min(Math.max(1, limit), 100);
     const fetchLimit = pageSize + 1;
-
-    let query = db
-      .collection(ITEMS_COLLECTION)
-      .orderBy("name", "asc") as ReturnType<
-      ReturnType<typeof db.collection>["orderBy"]
-    >;
-
-    if (category && category.trim()) {
-      query = query.where("category", "==", category.trim()) as typeof query;
-    }
-
     const searchTrimmed = search?.trim();
-    if (searchTrimmed) {
-      const start = searchTrimmed;
-      const end = searchTrimmed + "\uf8ff";
-      query = query.where("name", ">=", start).where("name", "<=", end) as typeof query;
+    const categoryTrimmed = category?.trim();
+
+    let query: FirebaseFirestore.Query<FirebaseFirestore.DocumentData> = db
+      .collection(ITEMS_COLLECTION);
+
+    if (categoryTrimmed) {
+      query = query.where("category", "==", categoryTrimmed);
     }
 
-    if (cursor && cursor.trim()) {
-      const cursorDoc = await db
-        .collection(ITEMS_COLLECTION)
-        .doc(cursor)
-        .get();
+    if (searchTrimmed) {
+      query = query
+        .where("name", ">=", searchTrimmed)
+        .where("name", "<=", searchTrimmed + "\uf8ff");
+    }
+
+    query = query.orderBy("name", "asc");
+
+    if (cursor?.trim()) {
+      const cursorDoc = await db.collection(ITEMS_COLLECTION).doc(cursor).get();
       if (cursorDoc.exists) {
-        query = query.startAfter(cursorDoc) as typeof query;
+        query = query.startAfter(cursorDoc);
       }
     }
 
