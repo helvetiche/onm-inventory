@@ -31,9 +31,24 @@ export type CreateMovementInput = {
   note?: string;
 };
 
+export type GetItemsPaginatedParams = {
+  limit: number;
+  cursor?: string | null;
+  search?: string | null;
+  category?: string | null;
+};
+
+export type GetItemsPaginatedResult = {
+  items: FirestoreDocument[];
+  nextCursor: string | null;
+  hasMore: boolean;
+};
+
 export interface InventoryDb {
   getAllItems(): Promise<FirestoreDocument[]>;
   getItemById(id: string): Promise<FirestoreDocument | null>;
+  getItemsPaginated(params: GetItemsPaginatedParams): Promise<GetItemsPaginatedResult>;
+  getCategories(): Promise<string[]>;
   getLevelsByItemId(itemId: string): Promise<FirestoreDocument[]>;
   getMovementsByItemId(itemId: string): Promise<FirestoreDocument[]>;
   createItem(data: Record<string, unknown>): Promise<FirestoreDocument>;
@@ -168,6 +183,70 @@ const createInventoryDb = (): InventoryDb => {
       id: doc.id,
       data: doc.data(),
     };
+  };
+
+  const getItemsPaginated = async (
+    params: GetItemsPaginatedParams
+  ): Promise<GetItemsPaginatedResult> => {
+    const { limit, cursor, search, category } = params;
+    const pageSize = Math.min(Math.max(1, limit), 100);
+    const fetchLimit = pageSize + 1;
+
+    let query = db
+      .collection(ITEMS_COLLECTION)
+      .orderBy("name", "asc") as ReturnType<
+      ReturnType<typeof db.collection>["orderBy"]
+    >;
+
+    if (category && category.trim()) {
+      query = query.where("category", "==", category.trim()) as typeof query;
+    }
+
+    const searchTrimmed = search?.trim();
+    if (searchTrimmed) {
+      const start = searchTrimmed;
+      const end = searchTrimmed + "\uf8ff";
+      query = query.where("name", ">=", start).where("name", "<=", end) as typeof query;
+    }
+
+    if (cursor && cursor.trim()) {
+      const cursorDoc = await db
+        .collection(ITEMS_COLLECTION)
+        .doc(cursor)
+        .get();
+      if (cursorDoc.exists) {
+        query = query.startAfter(cursorDoc) as typeof query;
+      }
+    }
+
+    const snapshot = await query.limit(fetchLimit).get();
+    const docs = snapshot.docs;
+    const hasMore = docs.length > pageSize;
+    const resultDocs = hasMore ? docs.slice(0, pageSize) : docs;
+
+    return {
+      items: resultDocs.map((doc) => ({
+        id: doc.id,
+        data: doc.data(),
+      })),
+      nextCursor: hasMore ? resultDocs[resultDocs.length - 1].id : null,
+      hasMore,
+    };
+  };
+
+  const getCategories = async (): Promise<string[]> => {
+    const snapshot = await db
+      .collection(ITEMS_COLLECTION)
+      .select("category")
+      .get();
+    const set = new Set<string>();
+    snapshot.docs.forEach((doc) => {
+      const cat = doc.get("category");
+      if (typeof cat === "string" && cat.trim()) {
+        set.add(cat.trim());
+      }
+    });
+    return Array.from(set).sort();
   };
 
   const getLevelsByItemId = async (
@@ -323,6 +402,8 @@ const createInventoryDb = (): InventoryDb => {
   return {
     getAllItems,
     getItemById,
+    getItemsPaginated,
+    getCategories,
     getLevelsByItemId,
     getMovementsByItemId,
     createItem,
