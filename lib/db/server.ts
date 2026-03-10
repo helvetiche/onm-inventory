@@ -36,9 +36,8 @@ export interface InventoryDb {
   getItemById(id: string): Promise<FirestoreDocument | null>;
   getLevelsByItemId(itemId: string): Promise<FirestoreDocument[]>;
   getMovementsByItemId(itemId: string): Promise<FirestoreDocument[]>;
-  createItem(
-    data: Record<string, unknown>
-  ): Promise<FirestoreDocument>;
+  createItem(data: Record<string, unknown>): Promise<FirestoreDocument>;
+  updateItem(id: string, data: Record<string, unknown>): Promise<FirestoreDocument>;
   createMovementTransaction(
     input: CreateMovementInput
   ): Promise<{ movement: FirestoreDocument; level: FirestoreDocument }>;
@@ -117,10 +116,17 @@ const createItemInputSchema = inventoryItemSchema.omit({
 });
 
 export type CreateItemInput = z.infer<typeof createItemInputSchema>;
+
+export type UpdateItemInput = Partial<CreateItemInput>;
+
+const updateItemInputSchema = createItemInputSchema.partial();
+
 export interface InventoryRepository {
   getAllItems(): Promise<InventoryItem[]>;
   getItemById(id: string): Promise<InventoryItem | null>;
   createItem(input: CreateItemInput): Promise<InventoryItem>;
+  updateItem(id: string, input: z.infer<typeof updateItemInputSchema>): Promise<InventoryItem>;
+  toggleItemActive(id: string): Promise<InventoryItem>;
   getInventoryLevelsForItem(itemId: string): Promise<InventoryLevel[]>;
   createMovement(input: CreateMovementInput): Promise<InventoryMovement>;
   getMovementsForItem(itemId: string): Promise<InventoryMovement[]>;
@@ -179,6 +185,31 @@ const createInventoryDb = (): InventoryDb => {
     return {
       id: created.id,
       data: created.data() as Record<string, unknown>,
+    };
+  };
+
+  const updateItem = async (
+    id: string,
+    data: Record<string, unknown>
+  ): Promise<FirestoreDocument> => {
+    const docRef = db.collection(ITEMS_COLLECTION).doc(id);
+    const existing = await docRef.get();
+
+    if (!existing.exists) {
+      throw new Error("Item not found");
+    }
+
+    const updateData = {
+      ...data,
+      updatedAt: createTimestamp(),
+    };
+
+    await docRef.update(updateData);
+    const updated = await docRef.get();
+
+    return {
+      id: updated.id,
+      data: updated.data() as Record<string, unknown>,
     };
   };
 
@@ -284,6 +315,7 @@ const createInventoryDb = (): InventoryDb => {
     getLevelsByItemId,
     getMovementsByItemId,
     createItem,
+    updateItem,
     createMovementTransaction,
   };
 };
@@ -325,6 +357,27 @@ export const createInventoryRepository = (
     return firestoreItemToDomain(document.id, document.data);
   };
 
+  const updateItem = async (
+    id: string,
+    input: UpdateItemInput
+  ): Promise<InventoryItem> => {
+    const parsed = updateItemInputSchema.parse(input);
+    if (Object.keys(parsed).length === 0) {
+      const existing = await getItemById(id);
+      if (!existing) throw new Error("Item not found");
+      return existing;
+    }
+    const document = await db.updateItem(id, parsed);
+    return firestoreItemToDomain(document.id, document.data);
+  };
+
+  const toggleItemActive = async (id: string): Promise<InventoryItem> => {
+    const existing = await getItemById(id);
+    if (!existing) throw new Error("Item not found");
+    const document = await db.updateItem(id, { isActive: !existing.isActive });
+    return firestoreItemToDomain(document.id, document.data);
+  };
+
   const getInventoryLevelsForItem = async (
     itemId: string
   ): Promise<InventoryLevel[]> => {
@@ -358,6 +411,8 @@ export const createInventoryRepository = (
     getAllItems,
     getItemById,
     createItem,
+    updateItem,
+    toggleItemActive,
     getInventoryLevelsForItem,
     createMovement,
     getMovementsForItem,
@@ -384,6 +439,21 @@ export const createItem = async (
   const repository = createInventoryRepository(createInventoryDb());
 
   return repository.createItem(input);
+};
+
+export const updateItem = async (
+  id: string,
+  input: UpdateItemInput
+): Promise<InventoryItem> => {
+  const repository = createInventoryRepository(createInventoryDb());
+
+  return repository.updateItem(id, input);
+};
+
+export const toggleItemActive = async (id: string): Promise<InventoryItem> => {
+  const repository = createInventoryRepository(createInventoryDb());
+
+  return repository.toggleItemActive(id);
 };
 
 export const getInventoryLevelsForItem = async (

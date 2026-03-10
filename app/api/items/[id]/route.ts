@@ -1,5 +1,20 @@
+import { z } from "zod";
 import { NextRequest, NextResponse } from "next/server";
-import { getInventoryLevelsForItem, getItemById } from "@/lib/db/server";
+import {
+  getInventoryLevelsForItem,
+  getItemById,
+  getMovementsForItem,
+  toggleItemActive,
+  updateItem,
+} from "@/lib/db/server";
+
+const patchBodySchema = z.object({
+  sku: z.string().min(1).optional(),
+  name: z.string().min(1).optional(),
+  description: z.string().optional(),
+  category: z.string().optional(),
+  unit: z.string().min(1).optional(),
+});
 
 export async function GET(
   _request: NextRequest,
@@ -13,7 +28,54 @@ export async function GET(
     return NextResponse.json({ error: "Item not found" }, { status: 404 });
   }
 
-  const levels = await getInventoryLevelsForItem(id);
+  const [levels, movements] = await Promise.all([
+    getInventoryLevelsForItem(id),
+    getMovementsForItem(id),
+  ]);
 
-  return NextResponse.json({ item, levels });
+  return NextResponse.json({ item, levels, movements });
+}
+
+export async function PATCH(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
+): Promise<NextResponse> {
+  const { id } = await context.params;
+
+  const item = await getItemById(id);
+
+  if (!item) {
+    return NextResponse.json({ error: "Item not found" }, { status: 404 });
+  }
+
+  const json = await request.json();
+  const parsed = patchBodySchema.safeParse(json);
+
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Invalid payload", details: parsed.error.flatten() },
+      { status: 400 }
+    );
+  }
+
+  const updated = await updateItem(id, parsed.data);
+
+  return NextResponse.json(updated);
+}
+
+export async function DELETE(
+  _request: NextRequest,
+  context: { params: Promise<{ id: string }> }
+): Promise<NextResponse> {
+  const { id } = await context.params;
+
+  const item = await getItemById(id);
+
+  if (!item) {
+    return NextResponse.json({ error: "Item not found" }, { status: 404 });
+  }
+
+  const toggled = await toggleItemActive(id);
+
+  return NextResponse.json(toggled);
 }
