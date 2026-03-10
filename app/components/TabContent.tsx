@@ -54,6 +54,14 @@ export function TabContent({ tab }: TabContentProps): JSX.Element {
 
   const heading = TAB_HEADINGS[validTab] ?? "Dashboard";
 
+  if (validTab === "items") {
+    return (
+      <div className="p-8">
+        <Items />
+      </div>
+    );
+  }
+
   return (
     <div className="p-8">
       <h1 className="mb-6 text-lg font-medium tracking-tight text-slate-900">
