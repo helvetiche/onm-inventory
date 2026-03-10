@@ -45,58 +45,69 @@ export interface InventoryDb {
 
 const createTimestamp = (): Date => new Date();
 
+const hasToDate = (v: unknown): v is { toDate: () => Date } =>
+  v !== null &&
+  typeof v === "object" &&
+  "toDate" in v &&
+  typeof (v as { toDate: () => Date }).toDate === "function";
+
+const normalizeFirestoreDates = (
+  obj: Record<string, unknown>,
+  dateKeys: string[]
+): Record<string, unknown> => {
+  const out = { ...obj };
+  for (const key of dateKeys) {
+    const v = out[key];
+    if (hasToDate(v)) {
+      out[key] = v.toDate();
+    }
+  }
+  return out;
+};
+
 const firestoreItemToDomain = (
   docId: string,
   data: unknown
 ): InventoryItem => {
-  const parsed = inventoryItemSchema.parse(
+  const raw =
     typeof data === "object" && data !== null
-      ? {
-          id: docId,
-          ...(data as Record<string, unknown>),
-        }
-      : {
-          id: docId,
-        }
+      ? { id: docId, ...(data as Record<string, unknown>) }
+      : { id: docId };
+  const normalized = normalizeFirestoreDates(
+    raw as Record<string, unknown>,
+    ["createdAt", "updatedAt"]
   );
-
-  return parsed;
+  return inventoryItemSchema.parse(normalized);
 };
 
 const firestoreLevelToDomain = (
   docId: string,
   data: unknown
 ): InventoryLevel => {
-  const parsed = inventoryLevelSchema.parse(
+  const raw =
     typeof data === "object" && data !== null
-      ? {
-          id: docId,
-          ...(data as Record<string, unknown>),
-        }
-      : {
-          id: docId,
-        }
+      ? { id: docId, ...(data as Record<string, unknown>) }
+      : { id: docId };
+  const normalized = normalizeFirestoreDates(
+    raw as Record<string, unknown>,
+    ["updatedAt"]
   );
-
-  return parsed;
+  return inventoryLevelSchema.parse(normalized);
 };
 
 const firestoreMovementToDomain = (
   docId: string,
   data: unknown
 ): InventoryMovement => {
-  const parsed = inventoryMovementSchema.parse(
+  const raw =
     typeof data === "object" && data !== null
-      ? {
-          id: docId,
-          ...(data as Record<string, unknown>),
-        }
-      : {
-          id: docId,
-        }
+      ? { id: docId, ...(data as Record<string, unknown>) }
+      : { id: docId };
+  const normalized = normalizeFirestoreDates(
+    raw as Record<string, unknown>,
+    ["createdAt"]
   );
-
-  return parsed;
+  return inventoryMovementSchema.parse(normalized);
 };
 
 const createMovementInputSchema = z.object({
