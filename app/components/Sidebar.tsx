@@ -174,55 +174,111 @@ export function Sidebar({
         role="navigation"
       >
         {isIconOnly ? (
-          <div className="grid grid-cols-3 gap-x-2 gap-y-3">
-            {[...filteredInventoryTabs, ...filteredSystemTabs].map((tab) => {
-              const Icon = tab.icon;
-              const active = isActive(tab.id);
-              const shortLabel =
-                tab.id === "dashboard"
-                  ? "Dash"
-                  : tab.id === "movements"
-                    ? "Move"
-                    : tab.id === "locations"
-                      ? "Loc"
-                      : tab.id === "reports"
-                        ? "Report"
-                        : tab.id === "settings"
-                          ? "Set"
-                          : tab.label;
-
-              return (
-                <Link
-                  key={tab.id}
-                  href={pathname === "/" ? tab.href : `/?tab=${tab.id}`}
-                  title={tab.label}
-                  className={`flex min-w-0 flex-col items-center gap-1.5 rounded-md px-1 py-2 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:ring-offset-2 ${
-                    active
-                      ? "bg-emerald-50/50"
-                      : "hover:bg-emerald-50/50"
-                  }`}
-                  aria-current={active ? "page" : undefined}
-                  aria-label={tab.label}
-                >
-                  <div
-                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${
-                      active ? "bg-emerald-900" : "bg-emerald-900/80"
-                    }`}
-                  >
-                    <Icon
-                      size={18}
-                      weight={active ? "fill" : "regular"}
-                      className="text-white"
-                      aria-hidden
-                    />
-                  </div>
-                  <span className="min-w-0 truncate text-center text-[11px] leading-tight text-emerald-900">
-                    {shortLabel}
+          <>
+            {filteredInventoryTabs.length > 0 && (
+              <>
+                <div className="mb-1 px-3 py-1.5">
+                  <span className="text-[11px] font-medium uppercase tracking-wider text-emerald-900/50">
+                    Inventory
                   </span>
-                </Link>
-              );
-            })}
-          </div>
+                </div>
+                <div className="grid grid-cols-3 gap-x-2 gap-y-3">
+                  {filteredInventoryTabs.map((tab) => {
+                    const Icon = tab.icon;
+                    const active = isActive(tab.id);
+                    const shortLabel =
+                      tab.id === "dashboard"
+                        ? "Dash"
+                        : tab.id === "movements"
+                          ? "Move"
+                          : tab.id === "locations"
+                            ? "Loc"
+                            : tab.label;
+
+                    return (
+                      <Link
+                        key={tab.id}
+                        href={pathname === "/" ? tab.href : `/?tab=${tab.id}`}
+                        title={tab.label}
+                        className={`flex min-w-0 flex-col items-center gap-1.5 rounded-md px-1 py-2 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:ring-offset-2 ${
+                          active ? "bg-emerald-50/50" : "hover:bg-emerald-50/50"
+                        }`}
+                        aria-current={active ? "page" : undefined}
+                        aria-label={tab.label}
+                      >
+                        <div
+                          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${
+                            active ? "bg-emerald-900" : "bg-emerald-900/80"
+                          }`}
+                        >
+                          <Icon
+                            size={18}
+                            weight={active ? "fill" : "regular"}
+                            className="text-white"
+                            aria-hidden
+                          />
+                        </div>
+                        <span className="min-w-0 truncate text-center text-[11px] leading-tight text-emerald-900">
+                          {shortLabel}
+                        </span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+            {filteredSystemTabs.length > 0 && (
+              <>
+                <div className="mt-4 mb-1 px-3 py-1.5">
+                  <span className="text-[11px] font-medium uppercase tracking-wider text-emerald-900/50">
+                    System
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 gap-x-2 gap-y-3">
+                  {filteredSystemTabs.map((tab) => {
+                    const Icon = tab.icon;
+                    const active = isActive(tab.id);
+                    const shortLabel =
+                      tab.id === "reports" ? "Report" : "Set";
+
+                    return (
+                      <Link
+                        key={tab.id}
+                        href={pathname === "/" ? tab.href : `/?tab=${tab.id}`}
+                        title={tab.label}
+                        className={`flex min-w-0 flex-col items-center gap-1.5 rounded-md px-1 py-2 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:ring-offset-2 ${
+                          active ? "bg-emerald-50/50" : "hover:bg-emerald-50/50"
+                        }`}
+                        aria-current={active ? "page" : undefined}
+                        aria-label={tab.label}
+                      >
+                        <div
+                          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${
+                            active ? "bg-emerald-900" : "bg-emerald-900/80"
+                          }`}
+                        >
+                          <Icon
+                            size={18}
+                            weight={active ? "fill" : "regular"}
+                            className="text-white"
+                            aria-hidden
+                          />
+                        </div>
+                        <span className="min-w-0 truncate text-center text-[11px] leading-tight text-emerald-900">
+                          {shortLabel}
+                        </span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+            {!hasAnyResults && (
+              <p className="px-4 py-6 text-[13px] text-emerald-900/60">
+                No results for &quot;{searchQuery}&quot;
+              </p>
+            )}
+          </>
         ) : (
           <>
             {hasAnyResults && (
