@@ -147,9 +147,17 @@ export type UpdateItemInput = Partial<CreateItemInput>;
 
 const updateItemInputSchema = createItemInputSchema.partial();
 
+export type ItemsPaginatedResult = {
+  items: InventoryItem[];
+  nextCursor: string | null;
+  hasMore: boolean;
+};
+
 export interface InventoryRepository {
   getAllItems(): Promise<InventoryItem[]>;
   getItemById(id: string): Promise<InventoryItem | null>;
+  getItemsPaginated(params: GetItemsPaginatedParams): Promise<ItemsPaginatedResult>;
+  getCategories(): Promise<string[]>;
   createItem(input: CreateItemInput): Promise<InventoryItem>;
   updateItem(id: string, input: z.infer<typeof updateItemInputSchema>): Promise<InventoryItem>;
   toggleItemActive(id: string): Promise<InventoryItem>;
@@ -194,20 +202,27 @@ const createInventoryDb = (): InventoryDb => {
     const searchTrimmed = search?.trim();
     const categoryTrimmed = category?.trim();
 
-    let query: FirebaseFirestore.Query<FirebaseFirestore.DocumentData> = db
-      .collection(ITEMS_COLLECTION);
+    const col = db.collection(ITEMS_COLLECTION);
+    let query = col.orderBy("name", "asc");
 
-    if (categoryTrimmed) {
-      query = query.where("category", "==", categoryTrimmed);
-    }
-
-    if (searchTrimmed) {
-      query = query
+    if (categoryTrimmed && searchTrimmed) {
+      query = col
+        .where("category", "==", categoryTrimmed)
         .where("name", ">=", searchTrimmed)
-        .where("name", "<=", searchTrimmed + "\uf8ff");
+        .where("name", "<=", searchTrimmed + "\uf8ff")
+        .orderBy("name", "asc");
+    } else if (categoryTrimmed) {
+      query = col
+        .where("category", "==", categoryTrimmed)
+        .orderBy("name", "asc");
+    } else if (searchTrimmed) {
+      query = col
+        .where("name", ">=", searchTrimmed)
+        .where("name", "<=", searchTrimmed + "\uf8ff")
+        .orderBy("name", "asc");
+    } else {
+      query = col.orderBy("name", "asc");
     }
-
-    query = query.orderBy("name", "asc");
 
     if (cursor?.trim()) {
       const cursorDoc = await db.collection(ITEMS_COLLECTION).doc(cursor).get();
