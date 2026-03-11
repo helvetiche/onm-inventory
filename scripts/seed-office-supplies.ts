@@ -309,10 +309,25 @@ const run = async (): Promise<void> => {
   const projectId = process.env.FIREBASE_PROJECT_ID;
   const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
   const privateKey = process.env.FIREBASE_PRIVATE_KEY;
+  const allowDestructiveSeed = process.env.ALLOW_DESTRUCTIVE_SEED === "true";
 
   if (!projectId || !clientEmail || !privateKey) {
     console.error(
       "Missing Firebase credentials. Set FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY in .env"
+    );
+    process.exit(1);
+  }
+
+  if (!allowDestructiveSeed) {
+    console.error(
+      "Seeder aborted. Set ALLOW_DESTRUCTIVE_SEED=true to allow clearing and reseeding inventory data."
+    );
+    process.exit(1);
+  }
+
+  if (projectId.toLowerCase().includes("prod")) {
+    console.error(
+      "Seeder aborted for safety: project appears to be production."
     );
     process.exit(1);
   }

@@ -62,6 +62,27 @@ export async function PATCH(
     );
   }
 
+  const nextRequested =
+    parsed.data.requestedQuantity ?? item.requestedQuantity;
+  const nextReceived =
+    parsed.data.receivedQuantity ?? item.receivedQuantity;
+  if (nextReceived > nextRequested) {
+    return NextResponse.json(
+      {
+        error: "Invalid payload",
+        details: {
+          formErrors: [],
+          fieldErrors: {
+            receivedQuantity: [
+              "Received quantity cannot exceed requested quantity",
+            ],
+          },
+        },
+      },
+      { status: 400 }
+    );
+  }
+
   const updated = await updateItem(id, parsed.data);
 
   return NextResponse.json(updated);

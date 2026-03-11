@@ -143,23 +143,23 @@ const createMovementInputSchema = z.object({
   note: z.string().optional(),
 });
 
-const createItemInputSchema = inventoryItemSchema
-  .omit({
-    id: true,
-    createdAt: true,
-    updatedAt: true,
-    isActive: true,
-  })
-  .refine(
-    (data) => data.receivedQuantity <= data.requestedQuantity,
-    "Received quantity cannot exceed requested quantity"
-  );
+const createItemInputBaseSchema = inventoryItemSchema.omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  isActive: true,
+});
+
+const createItemInputSchema = createItemInputBaseSchema.refine(
+  (data) => data.receivedQuantity <= data.requestedQuantity,
+  "Received quantity cannot exceed requested quantity"
+);
 
 export type CreateItemInput = z.infer<typeof createItemInputSchema>;
 
 export type UpdateItemInput = Partial<CreateItemInput>;
 
-const updateItemInputSchema = createItemInputSchema.partial();
+const updateItemInputSchema = createItemInputBaseSchema.partial();
 
 export type ItemsPaginatedResult = {
   items: InventoryItem[];
@@ -509,10 +509,16 @@ export const createInventoryRepository = (
     input: UpdateItemInput
   ): Promise<InventoryItem> => {
     const parsed = updateItemInputSchema.parse(input);
+    const existing = await getItemById(id);
+    if (!existing) throw new Error("Item not found");
     if (Object.keys(parsed).length === 0) {
-      const existing = await getItemById(id);
-      if (!existing) throw new Error("Item not found");
       return existing;
+    }
+    const nextRequested =
+      parsed.requestedQuantity ?? existing.requestedQuantity;
+    const nextReceived = parsed.receivedQuantity ?? existing.receivedQuantity;
+    if (nextReceived > nextRequested) {
+      throw new Error("Received quantity cannot exceed requested quantity");
     }
     const document = await db.updateItem(id, parsed);
     return firestoreItemToDomain(document.id, document.data);

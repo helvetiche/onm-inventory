@@ -12,7 +12,13 @@ const createItemBodySchema = z.object({
   stockYear: z.number().int().min(2000).max(9999),
   requestedQuantity: z.number().int().min(0),
   receivedQuantity: z.number().int().min(0),
-});
+}).refine(
+  (data) => data.receivedQuantity <= data.requestedQuantity,
+  {
+    message: "Received quantity cannot exceed requested quantity",
+    path: ["receivedQuantity"],
+  }
+);
 
 const limitSchema = z.coerce.number().min(1).max(100).default(8);
 const pageSchema = z.coerce.number().min(1).default(1);
