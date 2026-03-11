@@ -29,7 +29,6 @@ const log = (
   const formatted = formatLog(level, message, context);
 
   if (level === "error") {
-    // eslint-disable-next-line no-console
     console.error(formatted);
   } else if (level === "warn") {
     // eslint-disable-next-line no-console

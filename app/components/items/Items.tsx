@@ -383,31 +383,31 @@ export function Items(): JSX.Element {
                 {Array.from({ length: PAGE_SIZE }, (_, i) => (
                   <tr key={i} className="transition-colors hover:bg-slate-50/50">
                     <td className="border-r border-slate-100 px-4 py-4">
-                      <div className="h-5 w-16 animate-pulse rounded bg-slate-200"></div>
+                      <div className="h-5 w-16 animate-pulse rounded bg-slate-200" />
                     </td>
                     <td className="border-r border-slate-100 px-4 py-4">
-                      <div className="h-4 w-24 animate-pulse rounded bg-slate-200"></div>
+                      <div className="h-4 w-24 animate-pulse rounded bg-slate-200" />
                     </td>
                     <td className="border-r border-slate-100 px-4 py-4">
-                      <div className="h-4 w-20 animate-pulse rounded bg-slate-200"></div>
+                      <div className="h-4 w-20 animate-pulse rounded bg-slate-200" />
                     </td>
                     <td className="border-r border-slate-100 px-4 py-4">
-                      <div className="h-4 w-16 animate-pulse rounded bg-slate-200"></div>
+                      <div className="h-4 w-16 animate-pulse rounded bg-slate-200" />
                     </td>
                     <td className="border-r border-slate-100 px-4 py-4">
-                      <div className="ml-auto h-4 w-12 animate-pulse rounded bg-slate-200"></div>
+                      <div className="ml-auto h-4 w-12 animate-pulse rounded bg-slate-200" />
                     </td>
                     <td className="border-r border-slate-100 px-4 py-4">
-                      <div className="ml-auto h-4 w-12 animate-pulse rounded bg-slate-200"></div>
+                      <div className="ml-auto h-4 w-12 animate-pulse rounded bg-slate-200" />
                     </td>
                     <td className="border-r border-slate-100 px-4 py-4">
-                      <div className="ml-auto h-4 w-12 animate-pulse rounded bg-slate-200"></div>
+                      <div className="ml-auto h-4 w-12 animate-pulse rounded bg-slate-200" />
                     </td>
                     <td className="relative px-4 py-4 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <div className="h-8 w-8 animate-pulse rounded-md bg-slate-200"></div>
-                        <div className="h-8 w-8 animate-pulse rounded-md bg-slate-200"></div>
-                        <div className="h-8 w-8 animate-pulse rounded-md bg-slate-200"></div>
+                        <div className="h-8 w-8 animate-pulse rounded-md bg-slate-200" />
+                        <div className="h-8 w-8 animate-pulse rounded-md bg-slate-200" />
+                        <div className="h-8 w-8 animate-pulse rounded-md bg-slate-200" />
                       </div>
                     </td>
                   </tr>

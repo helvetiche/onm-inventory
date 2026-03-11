@@ -331,15 +331,15 @@ const run = async (): Promise<void> => {
   const col = db.collection(ITEMS_COLLECTION);
   const now = new Date();
 
-  console.log("Clearing current inventory data...");
+  process.stdout.write("Clearing current inventory data...\n");
   const deletedItems = await clearCollection(ITEMS_COLLECTION);
   const deletedLevels = await clearCollection(LEVELS_COLLECTION);
   const deletedMovements = await clearCollection(MOVEMENTS_COLLECTION);
-  console.log(
-    `Deleted ${deletedItems} items, ${deletedLevels} inventory levels, ${deletedMovements} movements.`
+  process.stdout.write(
+    `Deleted ${deletedItems} items, ${deletedLevels} inventory levels, ${deletedMovements} movements.\n`
   );
 
-  console.log(`Seeding ${OFFICE_SUPPLIES.length} office supply items...`);
+  process.stdout.write(`Seeding ${OFFICE_SUPPLIES.length} office supply items...\n`);
 
   for (const item of OFFICE_SUPPLIES) {
     await col.add({
@@ -356,10 +356,10 @@ const run = async (): Promise<void> => {
       createdAt: now,
       updatedAt: now,
     });
-    console.log(`  Added: ${item.sku} - ${item.name}`);
+    process.stdout.write(`  Added: ${item.sku} - ${item.name}\n`);
   }
 
-  console.log("Done.");
+  process.stdout.write("Done.\n");
 };
 
 run().catch((err) => {
