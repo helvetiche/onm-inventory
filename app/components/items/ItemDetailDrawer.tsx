@@ -37,7 +37,7 @@ export function ItemDetailDrawer({
   isLoading,
   onEdit,
 }: ItemDetailDrawerProps): JSX.Element | null {
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent): void => {
     if (e.key === "Escape") {
       onClose();
     }

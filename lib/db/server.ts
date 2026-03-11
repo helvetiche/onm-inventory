@@ -198,7 +198,7 @@ const createInventoryDb = (): InventoryDb => {
   const buildItemsQuery = (
     searchTrimmed: string | null,
     categoryTrimmed: string | null
-  ) => {
+  ): FirebaseFirestore.Query => {
     const col = db.collection(ITEMS_COLLECTION);
     if (categoryTrimmed && searchTrimmed) {
       return col

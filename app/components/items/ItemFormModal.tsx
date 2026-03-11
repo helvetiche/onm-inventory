@@ -39,7 +39,7 @@ export function ItemFormModal({
   isSubmitting,
   error,
 }: ItemFormModalProps): JSX.Element | null {
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
     e.preventDefault();
     const form = e.currentTarget;
     const formData = new FormData(form);
@@ -76,7 +76,7 @@ export function ItemFormModal({
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent): void => {
     if (e.key === "Escape") {
       onClose();
     }

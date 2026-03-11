@@ -16,7 +16,6 @@ import {
   Stack,
   Tag,
 } from "@phosphor-icons/react";
-import type { InventoryItem } from "@/lib/db/types";
 import {
   useItemsQuery,
   useCategoriesQuery,
@@ -142,10 +141,6 @@ export function Items(): JSX.Element {
     return () => clearTimeout(t);
   }, [searchInput]);
 
-  useEffect(() => {
-    setPage(1);
-  }, [searchParam, categoryFilter]);
-
   const getPageNumbers = (): (number | "ellipsis")[] => {
     if (totalPages <= 7) {
       return Array.from({ length: totalPages }, (_, i) => i + 1);
@@ -180,15 +175,23 @@ export function Items(): JSX.Element {
   const startItem = totalCount === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
   const endItem = Math.min(currentPage * PAGE_SIZE, totalCount);
 
-  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchInput(e.target.value);
-  }, []);
+  const handleSearchChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>): void => {
+      setPage(1);
+      setSearchInput(e.target.value);
+    },
+    []
+  );
 
-  const handleCategoryChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
-    setCategoryFilter(e.target.value);
-  }, []);
+  const handleCategoryChange = useCallback(
+    (e: React.ChangeEvent<HTMLSelectElement>): void => {
+      setPage(1);
+      setCategoryFilter(e.target.value);
+    },
+    []
+  );
 
-  const handleCreateSubmit = (values: CreateItemInput | UpdateItemInput) => {
+  const handleCreateSubmit = (values: CreateItemInput | UpdateItemInput): void => {
     createMutation.mutate(values as CreateItemInput, {
       onSuccess: () => {
         setIsCreateModalOpen(false);
@@ -196,7 +199,7 @@ export function Items(): JSX.Element {
     });
   };
 
-  const handleEditSubmit = (values: CreateItemInput | UpdateItemInput) => {
+  const handleEditSubmit = (values: CreateItemInput | UpdateItemInput): void => {
     if (!editItemId) return;
     updateMutation.mutate(values as UpdateItemInput, {
       onSuccess: () => {
@@ -206,7 +209,7 @@ export function Items(): JSX.Element {
     });
   };
 
-  const handleToggleActive = (id: string) => {
+  const handleToggleActive = (id: string): void => {
     toggleMutation.mutate(id, {
       onSuccess: () => {
         setOpenMenuId(null);
@@ -215,7 +218,7 @@ export function Items(): JSX.Element {
     });
   };
 
-  const handleEditFromDetail = () => {
+  const handleEditFromDetail = (): void => {
     if (detailItemId) {
       setEditItemId(detailItemId);
       setDetailItemId(null);

@@ -121,9 +121,9 @@ export function Sidebar({
   const hasAnyResults =
     filteredInventoryTabs.length > 0 || filteredSystemTabs.length > 0;
 
-  const isActive = (tabId: SidebarTabId) => activeTab === tabId;
+  const isActive = (tabId: SidebarTabId): boolean => activeTab === tabId;
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     setSearchQuery(e.target.value);
   };
 
