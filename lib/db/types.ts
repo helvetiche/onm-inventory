@@ -52,16 +52,3 @@ export const inventoryMovementSchema = z.object({
 
 export type InventoryMovement = z.infer<typeof inventoryMovementSchema>;
 
-export const inventoryRequestSchema = z.object({
-  id: z.string(),
-  itemId: z.string(),
-  month: z.number().min(1).max(12),
-  year: z.number().min(2000).max(2100),
-  requested: z.number().min(0),
-  received: z.number().min(0),
-  createdAt: z.date(),
-  updatedAt: z.date(),
-});
-
-export type InventoryRequest = z.infer<typeof inventoryRequestSchema>;
-
