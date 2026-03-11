@@ -1,6 +1,7 @@
 import "server-only";
 
 import { getAdminDb } from "@/lib/firebase/admin";
+import { FieldPath } from "firebase-admin/firestore";
 import {
   type InventoryItem,
   type InventoryLevel,
@@ -11,12 +12,15 @@ import {
   inventoryMovementSchema,
   inventoryMovementTypeSchema,
 } from "@/lib/db/types";
+import { getOrSetCachedValue, setCachedValue } from "@/lib/upstash";
 import { z } from "zod";
 
 const ITEMS_COLLECTION = "items";
 const LEVELS_COLLECTION = "inventoryLevels";
 const MOVEMENTS_COLLECTION = "inventoryMovements";
 const CATEGORY_CACHE_TTL_MS = 5 * 60 * 1000;
+const CATEGORY_CACHE_TTL_SECONDS = 5 * 60;
+const CATEGORIES_CACHE_KEY = "items:categories:v1";
 
 let categoriesCache:
   | {
@@ -44,6 +48,7 @@ export type GetItemsPaginatedParams = {
   page: number;
   search?: string | null;
   category?: string | null;
+  cursor?: string | null;
 };
 
 export type GetItemsPaginatedResult = {
@@ -51,6 +56,7 @@ export type GetItemsPaginatedResult = {
   page: number;
   totalPages: number;
   totalCount: number;
+  nextCursor: string | null;
 };
 
 export interface InventoryDb {
@@ -218,42 +224,72 @@ const createInventoryDb = (): InventoryDb => {
         .where("category", "==", categoryTrimmed)
         .where("name", ">=", searchTrimmed)
         .where("name", "<=", searchTrimmed + "\uf8ff")
-        .orderBy("name", "asc");
+        .orderBy("name", "asc")
+        .orderBy(FieldPath.documentId(), "asc");
     }
     if (categoryTrimmed) {
       return col
         .where("category", "==", categoryTrimmed)
-        .orderBy("name", "asc");
+        .orderBy("name", "asc")
+        .orderBy(FieldPath.documentId(), "asc");
     }
     if (searchTrimmed) {
       return col
         .where("name", ">=", searchTrimmed)
         .where("name", "<=", searchTrimmed + "\uf8ff")
-        .orderBy("name", "asc");
+        .orderBy("name", "asc")
+        .orderBy(FieldPath.documentId(), "asc");
     }
-    return col.orderBy("name", "asc");
+    return col.orderBy("name", "asc").orderBy(FieldPath.documentId(), "asc");
   };
 
   const getItemsPaginated = async (
     params: GetItemsPaginatedParams
   ): Promise<GetItemsPaginatedResult> => {
-    const { limit, page, search, category } = params;
+    const { limit, page, search, category, cursor } = params;
     const pageSize = Math.min(Math.max(1, limit), 100);
     const pageNum = Math.max(1, page);
     const searchTrimmed = search?.trim() || null;
     const categoryTrimmed = category?.trim() || null;
 
     const query = buildItemsQuery(searchTrimmed, categoryTrimmed);
+    let paginatedQuery = query;
+    if (cursor) {
+      try {
+        const decoded = JSON.parse(
+          Buffer.from(cursor, "base64").toString("utf-8")
+        ) as {
+          lastName: string;
+          lastId: string;
+        };
+        if (decoded.lastName && decoded.lastId) {
+          paginatedQuery = query.startAfter(decoded.lastName, decoded.lastId);
+        }
+      } catch {
+        // Ignore invalid cursor and fallback to page-based query.
+      }
+    }
 
-    const offset = (pageNum - 1) * pageSize;
     const [countSnapshot, dataSnapshot] = await Promise.all([
       query.count().get(),
-      query.offset(offset).limit(pageSize).get(),
+      cursor
+        ? paginatedQuery.limit(pageSize).get()
+        : paginatedQuery.offset((pageNum - 1) * pageSize).limit(pageSize).get(),
     ]);
 
     const totalCount = countSnapshot.data().count;
     const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
     const docs = dataSnapshot.docs;
+    const lastDoc = docs[docs.length - 1];
+    const nextCursor = lastDoc
+      ? Buffer.from(
+          JSON.stringify({
+            lastName: String(lastDoc.get("name") ?? ""),
+            lastId: lastDoc.id,
+          }),
+          "utf-8"
+        ).toString("base64")
+      : null;
 
     return {
       items: docs.map((doc) => ({
@@ -263,10 +299,35 @@ const createInventoryDb = (): InventoryDb => {
       page: pageNum,
       totalPages,
       totalCount,
+      nextCursor,
     };
   };
 
   const getCategories = async (): Promise<string[]> => {
+    try {
+      const cached = await getOrSetCachedValue<string[]>(
+        CATEGORIES_CACHE_KEY,
+        async () => {
+          const snapshot = await db
+            .collection(ITEMS_COLLECTION)
+            .select("category")
+            .get();
+          const set = new Set<string>();
+          snapshot.docs.forEach((doc) => {
+            const cat = doc.get("category");
+            if (typeof cat === "string" && cat.trim()) {
+              set.add(cat.trim());
+            }
+          });
+          return Array.from(set).sort();
+        },
+        { ttlSeconds: CATEGORY_CACHE_TTL_SECONDS }
+      );
+      return cached;
+    } catch {
+      // Fallback to in-memory and Firestore query when Redis is unavailable.
+    }
+
     const nowMs = Date.now();
     if (categoriesCache && categoriesCache.expiresAt > nowMs) {
       return categoriesCache.value;
@@ -312,6 +373,7 @@ const createInventoryDb = (): InventoryDb => {
 
     await docRef.set(data);
     categoriesCache = null;
+    void setCachedValue(CATEGORIES_CACHE_KEY, [], { ttlSeconds: 1 });
 
     const created = await docRef.get();
 
@@ -339,6 +401,7 @@ const createInventoryDb = (): InventoryDb => {
 
     await docRef.update(updateData);
     categoriesCache = null;
+    void setCachedValue(CATEGORIES_CACHE_KEY, [], { ttlSeconds: 1 });
     const updated = await docRef.get();
 
     return {

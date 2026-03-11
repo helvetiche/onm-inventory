@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  keepPreviousData,
   useMutation,
   type UseMutationResult,
   useQuery,
@@ -15,6 +16,7 @@ export type ItemsQueryParams = {
   page?: number;
   search?: string | null;
   category?: string | null;
+  cursor?: string | null;
 };
 
 export type ItemsPaginatedResponse = {
@@ -22,6 +24,7 @@ export type ItemsPaginatedResponse = {
   page: number;
   totalPages: number;
   totalCount: number;
+  nextCursor: string | null;
 };
 
 const itemsPaginatedSchema = z.object({
@@ -45,6 +48,7 @@ const itemsPaginatedSchema = z.object({
   page: z.number(),
   totalPages: z.number(),
   totalCount: z.number(),
+  nextCursor: z.string().nullable(),
 });
 
 const createItemInputSchema = z.object({
@@ -69,6 +73,7 @@ const fetchItemsPaginated = async (
   if (params.page) searchParams.set("page", String(params.page));
   if (params.search) searchParams.set("search", params.search);
   if (params.category) searchParams.set("category", params.category);
+  if (params.cursor) searchParams.set("cursor", params.cursor);
 
   const response = await fetch(`/api/items?${searchParams.toString()}`);
 
@@ -119,16 +124,19 @@ export const useItemsQuery = (
     page = 1,
     search,
     category,
+    cursor,
   } = params;
   return useQuery({
-    queryKey: ["items", { limit, page, search, category }],
+    queryKey: ["items", { limit, page, search, category, cursor }],
     queryFn: () =>
       fetchItemsPaginated({
         limit,
         page,
         search: search ?? null,
         category: category ?? null,
+        cursor: cursor ?? null,
       }),
+    placeholderData: keepPreviousData,
   });
 };
 
@@ -136,6 +144,7 @@ export const useCategoriesQuery = (): UseQueryResult<string[]> => {
   return useQuery({
     queryKey: ["items", "categories"],
     queryFn: fetchCategories,
+    staleTime: 5 * 60 * 1000,
   });
 };
 

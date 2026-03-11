@@ -22,6 +22,7 @@ const createItemBodySchema = z.object({
 
 const limitSchema = z.coerce.number().min(1).max(100).default(8);
 const pageSchema = z.coerce.number().min(1).default(1);
+const cursorSchema = z.string().optional();
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const { searchParams } = new URL(request.url);
@@ -29,12 +30,14 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const page = pageSchema.parse(searchParams.get("page") ?? 1);
   const search = searchParams.get("search") ?? undefined;
   const category = searchParams.get("category") ?? undefined;
+  const cursor = cursorSchema.parse(searchParams.get("cursor") ?? undefined);
 
   const result = await getItemsPaginated({
     limit,
     page,
     search: search || null,
     category: category || null,
+    cursor: cursor || null,
   });
 
   return NextResponse.json(result);

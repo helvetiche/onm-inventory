@@ -310,6 +310,7 @@ const run = async (): Promise<void> => {
   const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
   const privateKey = process.env.FIREBASE_PRIVATE_KEY;
   const allowDestructiveSeed = process.env.ALLOW_DESTRUCTIVE_SEED === "true";
+  const seedConfirmToken = process.env.SEED_CONFIRM_TOKEN;
 
   if (!projectId || !clientEmail || !privateKey) {
     console.error(
@@ -321,6 +322,13 @@ const run = async (): Promise<void> => {
   if (!allowDestructiveSeed) {
     console.error(
       "Seeder aborted. Set ALLOW_DESTRUCTIVE_SEED=true to allow clearing and reseeding inventory data."
+    );
+    process.exit(1);
+  }
+
+  if (seedConfirmToken !== "WIPE_AND_SEED_ITEMS") {
+    console.error(
+      "Seeder aborted. Set SEED_CONFIRM_TOKEN=WIPE_AND_SEED_ITEMS to confirm destructive reseed."
     );
     process.exit(1);
   }
