@@ -36,9 +36,13 @@ const normalizeAuthError = (code: AuthErrorCode): string => {
   return map[code] ?? "An error occurred. Please try again.";
 };
 
-export const useAuth = () => useAuthContext();
+export const useAuth = (): ReturnType<typeof useAuthContext> => useAuthContext();
 
-export const useSignUp = () => {
+export const useSignUp = (): {
+  signUp: (email: string, password: string) => Promise<UserCredential | null>;
+  isLoading: boolean;
+  error: string | null;
+} => {
   const { refetch } = useAuthContext();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -77,7 +81,11 @@ export const useSignUp = () => {
   return { signUp, isLoading, error };
 };
 
-export const useSignIn = () => {
+export const useSignIn = (): {
+  signIn: (email: string, password: string) => Promise<UserCredential | null>;
+  isLoading: boolean;
+  error: string | null;
+} => {
   const { refetch } = useAuthContext();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -116,7 +124,10 @@ export const useSignIn = () => {
   return { signIn, isLoading, error };
 };
 
-export const useSignOut = () => {
+export const useSignOut = (): {
+  signOut: () => Promise<void>;
+  isLoading: boolean;
+} => {
   const { refetch } = useAuthContext();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -134,7 +145,12 @@ export const useSignOut = () => {
   return { signOut: signOutFn, isLoading };
 };
 
-export const useResetPassword = () => {
+export const useResetPassword = (): {
+  resetPassword: (email: string) => Promise<void>;
+  isLoading: boolean;
+  error: string | null;
+  success: boolean;
+} => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);

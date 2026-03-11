@@ -73,7 +73,7 @@ const fetchItemDetail = async (id: string): Promise<ItemDetailResponse> => {
   return parsed as ItemDetailResponse;
 };
 
-const updateItemInputSchema = z.object({
+const _updateItemInputSchema = z.object({
   sku: z.string().min(1).optional(),
   name: z.string().min(1).optional(),
   description: z.string().optional(),
@@ -85,7 +85,7 @@ const updateItemInputSchema = z.object({
   receivedQuantity: z.number().int().min(0).optional(),
 });
 
-export type UpdateItemInput = z.infer<typeof updateItemInputSchema>;
+export type UpdateItemInput = z.infer<typeof _updateItemInputSchema>;
 
 const updateItemRequest = async (
   id: string,
