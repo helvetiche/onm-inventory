@@ -12,6 +12,9 @@ import {
   Package,
   CaretLeft,
   CaretRight,
+  Cube,
+  Stack,
+  Tag,
 } from "@phosphor-icons/react";
 import type { InventoryItem } from "@/lib/db/types";
 import {
@@ -32,17 +35,72 @@ import { ItemDetailDrawer } from "./ItemDetailDrawer";
 const PAGE_SIZE = 8;
 const SEARCH_DEBOUNCE_MS = 300;
 
+type StatCardBadge = {
+  icon: React.ReactNode;
+  label?: string;
+};
+
+type StatCardProps = {
+  icon: React.ReactNode;
+  title: string;
+  count: number | string;
+  badges: [StatCardBadge, StatCardBadge, StatCardBadge];
+  description: string;
+};
+
+function StatCard({
+  icon,
+  title,
+  count,
+  badges,
+  description,
+}: StatCardProps): JSX.Element {
+  const descWords = description.split(/\s+/).slice(0, 20).join(" ");
+  return (
+    <div className="rounded-lg border border-slate-100 bg-white p-5 shadow-[0_1px_3px_0_rgba(0,0,0,0.05)]">
+      <div className="mb-3 flex items-center gap-2">
+        <span className="flex h-9 w-9 items-center justify-center rounded-md bg-emerald-900/10 text-emerald-900">
+          {icon}
+        </span>
+        <span className="text-[14px] font-medium text-emerald-900">{title}</span>
+      </div>
+      <p className="mb-3 text-2xl font-medium tracking-tight text-emerald-900">
+        {count}
+      </p>
+      <div className="mb-3 flex flex-wrap gap-2">
+        {badges.map((badge, i) => (
+          <div
+            key={i}
+            className="flex items-center gap-1.5 rounded-md border border-slate-100 bg-slate-50/80 px-2.5 py-2"
+          >
+            <span className="flex h-6 w-6 items-center justify-center text-emerald-900/80">
+              {badge.icon}
+            </span>
+            {badge.label && (
+              <span className="max-w-[80px] truncate text-[12px] text-slate-600">
+                {badge.label}
+              </span>
+            )}
+          </div>
+        ))}
+      </div>
+      <p className="text-[13px] leading-relaxed text-slate-500">{descWords}</p>
+    </div>
+  );
+}
+
 export function Items(): JSX.Element {
   const [searchInput, setSearchInput] = useState("");
   const [searchParam, setSearchParam] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
+  const [page, setPage] = useState(1);
 
-  const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } =
-    useItemsInfiniteQuery({
-      limit: PAGE_SIZE,
-      search: searchParam || null,
-      category: categoryFilter || null,
-    });
+  const { data, isLoading, error } = useItemsQuery({
+    limit: PAGE_SIZE,
+    page,
+    search: searchParam || null,
+    category: categoryFilter || null,
+  });
   const { data: categories = [] } = useCategoriesQuery();
   const createMutation = useCreateItemMutation();
 
@@ -57,10 +115,10 @@ export function Items(): JSX.Element {
   const updateMutation = useUpdateItemMutation(editItemId);
   const toggleMutation = useToggleItemActiveMutation();
 
-  const items: InventoryItem[] =
-    (data as { pages: ItemsPaginatedResponse[] } | undefined)?.pages?.flatMap(
-      (p) => p.items
-    ) ?? [];
+  const items = data?.items ?? [];
+  const totalPages = data?.totalPages ?? 1;
+  const totalCount = data?.totalCount ?? 0;
+  const currentPage = data?.page ?? 1;
   const activeCount = items.filter((i) => i.isActive).length;
 
   useEffect(() => {
@@ -69,6 +127,44 @@ export function Items(): JSX.Element {
     }, SEARCH_DEBOUNCE_MS);
     return () => clearTimeout(t);
   }, [searchInput]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [searchParam, categoryFilter]);
+
+  const getPageNumbers = (): (number | "ellipsis")[] => {
+    if (totalPages <= 7) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+    const result: (number | "ellipsis")[] = [];
+    if (currentPage <= 4) {
+      result.push(1, 2, 3, 4, 5, "ellipsis", totalPages);
+    } else if (currentPage >= totalPages - 3) {
+      result.push(
+        1,
+        "ellipsis",
+        totalPages - 4,
+        totalPages - 3,
+        totalPages - 2,
+        totalPages - 1,
+        totalPages
+      );
+    } else {
+      result.push(
+        1,
+        "ellipsis",
+        currentPage - 1,
+        currentPage,
+        currentPage + 1,
+        "ellipsis",
+        totalPages
+      );
+    }
+    return result;
+  };
+
+  const startItem = totalCount === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
+  const endItem = Math.min(currentPage * PAGE_SIZE, totalCount);
 
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchInput(e.target.value);
@@ -120,7 +216,7 @@ export function Items(): JSX.Element {
             Items
           </h1>
           <span className="rounded-full bg-emerald-50 px-3 py-1 text-[13px] font-normal text-emerald-800">
-            {items.length} shown
+            {totalCount} total
             {activeCount > 0 ? ` · ${activeCount} active` : ""}
           </span>
         </div>
@@ -132,6 +228,47 @@ export function Items(): JSX.Element {
           <Plus size={18} weight="regular" aria-hidden />
           Add item
         </button>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <StatCard
+          icon={<Package size={18} weight="regular" aria-hidden />}
+          title="Total Items"
+          count={isLoading ? "—" : totalCount}
+          badges={[
+            { icon: <Package size={14} weight="regular" aria-hidden /> },
+            { icon: <Cube size={14} weight="regular" aria-hidden /> },
+            { icon: <Stack size={14} weight="regular" aria-hidden /> },
+          ]}
+          description="The total count of inventory items in your product catalog across all categories and filters you have added so far."
+        />
+        <StatCard
+          icon={<Archive size={18} weight="regular" aria-hidden />}
+          title="Categories"
+          count={categories.length}
+          badges={[
+            ...categories.slice(0, 3).map((c) => ({
+              icon: <Tag size={14} weight="regular" aria-hidden />,
+              label: c,
+            })),
+            ...Array.from({ length: Math.max(0, 3 - categories.length) }, () => ({
+              icon: <Tag size={14} weight="regular" aria-hidden />,
+              label: undefined,
+            })),
+          ].slice(0, 3) as [StatCardBadge, StatCardBadge, StatCardBadge]}
+          description="The number of unique product categories that you use to organize and group your inventory items together in the system."
+        />
+        <StatCard
+          icon={<MagnifyingGlass size={18} weight="regular" aria-hidden />}
+          title="On This Page"
+          count={items.length}
+          badges={[
+            { icon: <Eye size={14} weight="regular" aria-hidden /> },
+            { icon: <PencilSimple size={14} weight="regular" aria-hidden /> },
+            { icon: <DotsThree size={14} weight="regular" aria-hidden /> },
+          ]}
+          description="The number of items that are currently displayed on this page of results based on your pagination and filter settings."
+        />
       </div>
 
       <div className="flex flex-col gap-4 sm:flex-row">
@@ -168,8 +305,80 @@ export function Items(): JSX.Element {
 
       <div className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-[0_1px_3px_0_rgba(0,0,0,0.05)]">
         {isLoading && (
-          <div className="flex items-center justify-center py-16">
-            <p className="text-[14px] text-slate-500">Loading items...</p>
+          <div className="overflow-x-auto">
+            <table
+              className="w-full min-w-[640px] table-fixed"
+              role="grid"
+            >
+              <thead>
+                <tr className="border-b border-slate-200 bg-slate-50/50">
+                  <th
+                    scope="col"
+                    className="w-[16%] border-r border-slate-200 px-4 py-3 text-left text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
+                  >
+                    SKU
+                  </th>
+                  <th
+                    scope="col"
+                    className="w-[16%] border-r border-slate-200 px-4 py-3 text-left text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
+                  >
+                    Name
+                  </th>
+                  <th
+                    scope="col"
+                    className="w-[16%] border-r border-slate-200 px-4 py-3 text-left text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
+                  >
+                    Category
+                  </th>
+                  <th
+                    scope="col"
+                    className="w-[16%] border-r border-slate-200 px-4 py-3 text-left text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
+                  >
+                    Unit
+                  </th>
+                  <th
+                    scope="col"
+                    className="w-[16%] border-r border-slate-200 px-4 py-3 text-left text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
+                  >
+                    Status
+                  </th>
+                  <th
+                    scope="col"
+                    className="w-[20%] px-4 py-3 text-right text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
+                  >
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {Array.from({ length: PAGE_SIZE }, (_, i) => (
+                  <tr key={i} className="transition-colors hover:bg-slate-50/50">
+                    <td className="border-r border-slate-100 px-4 py-4">
+                      <div className="h-5 w-16 animate-pulse rounded bg-slate-200"></div>
+                    </td>
+                    <td className="border-r border-slate-100 px-4 py-4">
+                      <div className="h-4 w-24 animate-pulse rounded bg-slate-200"></div>
+                    </td>
+                    <td className="border-r border-slate-100 px-4 py-4">
+                      <div className="h-4 w-20 animate-pulse rounded bg-slate-200"></div>
+                    </td>
+                    <td className="border-r border-slate-100 px-4 py-4">
+                      <div className="h-4 w-12 animate-pulse rounded bg-slate-200"></div>
+                    </td>
+                    <td className="border-r border-slate-100 px-4 py-4">
+                      <div className="h-5 w-16 animate-pulse rounded-full bg-slate-200"></div>
+                    </td>
+                    <td className="relative px-4 py-4 text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <div className="h-8 w-8 animate-pulse rounded-md bg-slate-200"></div>
+                        <div className="h-8 w-8 animate-pulse rounded-md bg-slate-200"></div>
+                        <div className="h-8 w-8 animate-pulse rounded-md bg-slate-200"></div>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
 
@@ -373,16 +582,60 @@ export function Items(): JSX.Element {
                 </tbody>
               </table>
             </div>
-            {hasNextPage && (
-              <div className="flex justify-center border-t border-slate-100 px-6 py-4">
-                <button
-                  type="button"
-                  onClick={() => fetchNextPage()}
-                  disabled={isFetchingNextPage}
-                  className="rounded-md border border-slate-200 px-4 py-2 text-[14px] font-medium text-emerald-900 transition-colors hover:bg-slate-50 disabled:opacity-60"
-                >
-                  {isFetchingNextPage ? "Loading..." : "Load more"}
-                </button>
+            {totalPages > 1 && (
+              <div className="flex flex-col items-center justify-between gap-4 border-t border-slate-200 px-6 py-4 sm:flex-row">
+                <p className="text-[13px] text-slate-500">
+                  Showing {startItem}-{endItem} of {totalCount}
+                </p>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage <= 1}
+                    className="flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 text-slate-600 transition-colors hover:bg-slate-50 disabled:pointer-events-none disabled:opacity-50"
+                    aria-label="Previous page"
+                  >
+                    <CaretLeft size={18} weight="bold" aria-hidden />
+                  </button>
+                  <div className="flex items-center gap-1">
+                    {getPageNumbers().map((n, i) =>
+                      n === "ellipsis" ? (
+                        <span
+                          key={`ellipsis-${i}`}
+                          className="px-2 text-slate-400"
+                        >
+                          ...
+                        </span>
+                      ) : (
+                        <button
+                          key={n}
+                          type="button"
+                          onClick={() => setPage(n)}
+                          className={`flex h-9 min-w-[36px] items-center justify-center rounded-md px-2 text-[14px] font-medium transition-colors ${
+                            currentPage === n
+                              ? "bg-emerald-900 text-white"
+                              : "border border-slate-200 text-emerald-900 hover:bg-emerald-50"
+                          }`}
+                          aria-current={currentPage === n ? "page" : undefined}
+                          aria-label={`Page ${n}`}
+                        >
+                          {n}
+                        </button>
+                      )
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setPage((p) => Math.min(totalPages, p + 1))
+                    }
+                    disabled={currentPage >= totalPages}
+                    className="flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 text-slate-600 transition-colors hover:bg-slate-50 disabled:pointer-events-none disabled:opacity-50"
+                    aria-label="Next page"
+                  >
+                    <CaretRight size={18} weight="bold" aria-hidden />
+                  </button>
+                </div>
               </div>
             )}
           </>
