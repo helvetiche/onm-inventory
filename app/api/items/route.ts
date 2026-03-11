@@ -8,6 +8,10 @@ const createItemBodySchema = z.object({
   description: z.string().optional(),
   category: z.string().optional(),
   unit: z.string().min(1),
+  stockMonth: z.number().int().min(1).max(12),
+  stockYear: z.number().int().min(2000).max(9999),
+  requestedQuantity: z.number().int().min(0),
+  receivedQuantity: z.number().int().min(0),
 });
 
 const limitSchema = z.coerce.number().min(1).max(100).default(8);

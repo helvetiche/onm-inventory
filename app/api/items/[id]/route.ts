@@ -14,6 +14,10 @@ const patchBodySchema = z.object({
   description: z.string().optional(),
   category: z.string().optional(),
   unit: z.string().min(1).optional(),
+  stockMonth: z.number().int().min(1).max(12).optional(),
+  stockYear: z.number().int().min(2000).max(9999).optional(),
+  requestedQuantity: z.number().int().min(0).optional(),
+  receivedQuantity: z.number().int().min(0).optional(),
 });
 
 export async function GET(
