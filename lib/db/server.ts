@@ -16,6 +16,14 @@ import { z } from "zod";
 const ITEMS_COLLECTION = "items";
 const LEVELS_COLLECTION = "inventoryLevels";
 const MOVEMENTS_COLLECTION = "inventoryMovements";
+const CATEGORY_CACHE_TTL_MS = 5 * 60 * 1000;
+
+let categoriesCache:
+  | {
+      value: string[];
+      expiresAt: number;
+    }
+  | null = null;
 
 type FirestoreDocument = {
   id: string;
@@ -135,12 +143,17 @@ const createMovementInputSchema = z.object({
   note: z.string().optional(),
 });
 
-const createItemInputSchema = inventoryItemSchema.omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-  isActive: true,
-});
+const createItemInputSchema = inventoryItemSchema
+  .omit({
+    id: true,
+    createdAt: true,
+    updatedAt: true,
+    isActive: true,
+  })
+  .refine(
+    (data) => data.receivedQuantity <= data.requestedQuantity,
+    "Received quantity cannot exceed requested quantity"
+  );
 
 export type CreateItemInput = z.infer<typeof createItemInputSchema>;
 
@@ -232,15 +245,15 @@ const createInventoryDb = (): InventoryDb => {
 
     const query = buildItemsQuery(searchTrimmed, categoryTrimmed);
 
+    const offset = (pageNum - 1) * pageSize;
     const [countSnapshot, dataSnapshot] = await Promise.all([
       query.count().get(),
-      query.limit(pageNum * pageSize).get(),
+      query.offset(offset).limit(pageSize).get(),
     ]);
 
     const totalCount = countSnapshot.data().count;
     const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
-    const offset = (pageNum - 1) * pageSize;
-    const docs = dataSnapshot.docs.slice(offset, offset + pageSize);
+    const docs = dataSnapshot.docs;
 
     return {
       items: docs.map((doc) => ({
@@ -254,6 +267,11 @@ const createInventoryDb = (): InventoryDb => {
   };
 
   const getCategories = async (): Promise<string[]> => {
+    const nowMs = Date.now();
+    if (categoriesCache && categoriesCache.expiresAt > nowMs) {
+      return categoriesCache.value;
+    }
+
     const snapshot = await db
       .collection(ITEMS_COLLECTION)
       .select("category")
@@ -265,7 +283,12 @@ const createInventoryDb = (): InventoryDb => {
         set.add(cat.trim());
       }
     });
-    return Array.from(set).sort();
+    const categories = Array.from(set).sort();
+    categoriesCache = {
+      value: categories,
+      expiresAt: nowMs + CATEGORY_CACHE_TTL_MS,
+    };
+    return categories;
   };
 
   const getLevelsByItemId = async (
@@ -288,6 +311,7 @@ const createInventoryDb = (): InventoryDb => {
     const docRef = db.collection(ITEMS_COLLECTION).doc();
 
     await docRef.set(data);
+    categoriesCache = null;
 
     const created = await docRef.get();
 
@@ -314,6 +338,7 @@ const createInventoryDb = (): InventoryDb => {
     };
 
     await docRef.update(updateData);
+    categoriesCache = null;
     const updated = await docRef.get();
 
     return {
@@ -344,17 +369,14 @@ const createInventoryDb = (): InventoryDb => {
     const now = createTimestamp();
 
     const movementRef = db.collection(MOVEMENTS_COLLECTION).doc();
-    const levelQuery = db
+    const levelRef = db
       .collection(LEVELS_COLLECTION)
-      .where("itemId", "==", itemId)
-      .where("locationId", "==", locationId)
-      .limit(1);
+      .doc(`${itemId}_${locationId}`);
 
     const result = await db.runTransaction(async (t) => {
-        const levelSnap = await t.get(levelQuery);
-        const levelDoc = levelSnap.docs[0];
-        const currentQty = levelDoc
-          ? (levelDoc.data().quantity as number)
+        const levelSnap = await t.get(levelRef);
+        const currentQty = levelSnap.exists
+          ? (levelSnap.data()?.quantity as number)
           : 0;
 
         let newQty: number;
@@ -396,11 +418,7 @@ const createInventoryDb = (): InventoryDb => {
           updatedAt: now,
         };
 
-        const levelRef = levelDoc
-          ? levelDoc.ref
-          : db.collection(LEVELS_COLLECTION).doc();
-
-        t.set(levelRef, levelData, levelDoc ? { merge: true } : {});
+        t.set(levelRef, levelData, { merge: true });
 
         return {
           movement: {
