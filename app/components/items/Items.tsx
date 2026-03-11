@@ -307,7 +307,7 @@ export function Items(): JSX.Element {
         {isLoading && (
           <div className="overflow-x-auto">
             <table
-              className="w-full min-w-[640px] table-fixed"
+              className="w-full min-w-[480px] table-fixed"
               role="grid"
             >
               <thead>
@@ -444,20 +444,6 @@ export function Items(): JSX.Element {
                       <td className="border-r border-slate-100 px-4 py-4 text-[14px] text-slate-600">
                         <span className="block truncate">
                           {item.category ?? "—"}
-                        </span>
-                      </td>
-                      <td className="border-r border-slate-100 px-4 py-4 text-[14px] text-slate-600">
-                        {item.unit}
-                      </td>
-                      <td className="border-r border-slate-100 px-4 py-4">
-                        <span
-                          className={`inline-flex items-center rounded-full px-2 py-0.5 text-[12px] font-medium ${
-                            item.isActive
-                              ? "bg-emerald-100 text-emerald-800"
-                              : "bg-slate-100 text-slate-600"
-                          }`}
-                        >
-                          {item.isActive ? "Active" : "Inactive"}
                         </span>
                       </td>
                       <td className="relative px-4 py-4 text-right">
