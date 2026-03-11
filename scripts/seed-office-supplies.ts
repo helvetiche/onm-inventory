@@ -11,6 +11,8 @@ import { config } from "dotenv";
 config({ path: ".env" });
 
 const ITEMS_COLLECTION = "items";
+const LEVELS_COLLECTION = "inventoryLevels";
+const MOVEMENTS_COLLECTION = "inventoryMovements";
 
 type OfficeSupplyItem = {
   sku: string;
@@ -18,6 +20,10 @@ type OfficeSupplyItem = {
   description?: string;
   category: string;
   unit: string;
+  stockMonth: number;
+  stockYear: number;
+  requestedQuantity: number;
+  receivedQuantity: number;
 };
 
 const OFFICE_SUPPLIES: OfficeSupplyItem[] = [
@@ -27,6 +33,10 @@ const OFFICE_SUPPLIES: OfficeSupplyItem[] = [
     description: "Standard blue ballpoint pen, medium point",
     category: "Writing",
     unit: "pcs",
+    stockMonth: 3,
+    stockYear: 2026,
+    requestedQuantity: 180,
+    receivedQuantity: 120,
   },
   {
     sku: "OFF-PEN-002",
@@ -34,6 +44,10 @@ const OFFICE_SUPPLIES: OfficeSupplyItem[] = [
     description: "Standard black ballpoint pen, medium point",
     category: "Writing",
     unit: "pcs",
+    stockMonth: 3,
+    stockYear: 2026,
+    requestedQuantity: 150,
+    receivedQuantity: 130,
   },
   {
     sku: "OFF-PEN-003",
@@ -41,6 +55,10 @@ const OFFICE_SUPPLIES: OfficeSupplyItem[] = [
     description: "Pack of assorted color gel pens",
     category: "Writing",
     unit: "pack",
+    stockMonth: 3,
+    stockYear: 2026,
+    requestedQuantity: 60,
+    receivedQuantity: 35,
   },
   {
     sku: "OFF-PEN-004",
@@ -48,6 +66,10 @@ const OFFICE_SUPPLIES: OfficeSupplyItem[] = [
     description: "Fine point permanent marker for labeling",
     category: "Writing",
     unit: "pcs",
+    stockMonth: 3,
+    stockYear: 2026,
+    requestedQuantity: 90,
+    receivedQuantity: 70,
   },
   {
     sku: "OFF-HIG-001",
@@ -55,6 +77,10 @@ const OFFICE_SUPPLIES: OfficeSupplyItem[] = [
     description: "Fluorescent yellow highlighter",
     category: "Writing",
     unit: "pcs",
+    stockMonth: 2,
+    stockYear: 2026,
+    requestedQuantity: 75,
+    receivedQuantity: 50,
   },
   {
     sku: "OFF-HIG-002",
@@ -62,6 +88,10 @@ const OFFICE_SUPPLIES: OfficeSupplyItem[] = [
     description: "Pack of 4 assorted highlighters",
     category: "Writing",
     unit: "pack",
+    stockMonth: 2,
+    stockYear: 2026,
+    requestedQuantity: 40,
+    receivedQuantity: 26,
   },
   {
     sku: "OFF-PEN-005",
@@ -69,6 +99,10 @@ const OFFICE_SUPPLIES: OfficeSupplyItem[] = [
     description: "Lead holder with 0.7mm lead",
     category: "Writing",
     unit: "pcs",
+    stockMonth: 2,
+    stockYear: 2026,
+    requestedQuantity: 55,
+    receivedQuantity: 41,
   },
   {
     sku: "OFF-PEN-006",
@@ -76,6 +110,10 @@ const OFFICE_SUPPLIES: OfficeSupplyItem[] = [
     description: "Standard #2 wooden pencils, box of 12",
     category: "Writing",
     unit: "box",
+    stockMonth: 2,
+    stockYear: 2026,
+    requestedQuantity: 35,
+    receivedQuantity: 30,
   },
   {
     sku: "OFF-ERA-001",
@@ -83,6 +121,10 @@ const OFFICE_SUPPLIES: OfficeSupplyItem[] = [
     description: "White vinyl eraser for pencils",
     category: "Writing",
     unit: "pcs",
+    stockMonth: 2,
+    stockYear: 2026,
+    requestedQuantity: 95,
+    receivedQuantity: 62,
   },
   {
     sku: "OFF-PAP-001",
@@ -90,6 +132,10 @@ const OFFICE_SUPPLIES: OfficeSupplyItem[] = [
     description: "500 sheets, 80gsm white copy paper",
     category: "Paper",
     unit: "box",
+    stockMonth: 1,
+    stockYear: 2026,
+    requestedQuantity: 120,
+    receivedQuantity: 95,
   },
   {
     sku: "OFF-PAP-002",
@@ -97,6 +143,10 @@ const OFFICE_SUPPLIES: OfficeSupplyItem[] = [
     description: "Yellow sticky notes, 12 pads per pack",
     category: "Paper",
     unit: "pack",
+    stockMonth: 1,
+    stockYear: 2026,
+    requestedQuantity: 50,
+    receivedQuantity: 50,
   },
   {
     sku: "OFF-PAP-003",
@@ -104,6 +154,10 @@ const OFFICE_SUPPLIES: OfficeSupplyItem[] = [
     description: "Ruled notepad, 100 sheets",
     category: "Paper",
     unit: "pcs",
+    stockMonth: 1,
+    stockYear: 2026,
+    requestedQuantity: 85,
+    receivedQuantity: 64,
   },
   {
     sku: "OFF-PAP-004",
@@ -111,6 +165,10 @@ const OFFICE_SUPPLIES: OfficeSupplyItem[] = [
     description: "White window envelopes, box of 500",
     category: "Paper",
     unit: "box",
+    stockMonth: 1,
+    stockYear: 2026,
+    requestedQuantity: 45,
+    receivedQuantity: 40,
   },
   {
     sku: "OFF-STAP-001",
@@ -118,6 +176,10 @@ const OFFICE_SUPPLIES: OfficeSupplyItem[] = [
     description: "Standard desktop stapler",
     category: "Fasteners",
     unit: "pcs",
+    stockMonth: 3,
+    stockYear: 2026,
+    requestedQuantity: 20,
+    receivedQuantity: 14,
   },
   {
     sku: "OFF-STAP-002",
@@ -125,6 +187,10 @@ const OFFICE_SUPPLIES: OfficeSupplyItem[] = [
     description: "5000 staples for standard staplers",
     category: "Fasteners",
     unit: "box",
+    stockMonth: 3,
+    stockYear: 2026,
+    requestedQuantity: 65,
+    receivedQuantity: 60,
   },
   {
     sku: "OFF-CLIP-001",
@@ -132,6 +198,10 @@ const OFFICE_SUPPLIES: OfficeSupplyItem[] = [
     description: "Assorted sizes, box of 100",
     category: "Fasteners",
     unit: "box",
+    stockMonth: 3,
+    stockYear: 2026,
+    requestedQuantity: 58,
+    receivedQuantity: 42,
   },
   {
     sku: "OFF-TAP-001",
@@ -139,6 +209,10 @@ const OFFICE_SUPPLIES: OfficeSupplyItem[] = [
     description: "Clear tape, 12 rolls per pack",
     category: "Adhesives",
     unit: "pack",
+    stockMonth: 2,
+    stockYear: 2026,
+    requestedQuantity: 38,
+    receivedQuantity: 18,
   },
   {
     sku: "OFF-SCI-001",
@@ -146,6 +220,10 @@ const OFFICE_SUPPLIES: OfficeSupplyItem[] = [
     description: "8-inch office scissors",
     category: "Tools",
     unit: "pcs",
+    stockMonth: 2,
+    stockYear: 2026,
+    requestedQuantity: 24,
+    receivedQuantity: 20,
   },
   {
     sku: "OFF-RUL-001",
@@ -153,6 +231,10 @@ const OFFICE_SUPPLIES: OfficeSupplyItem[] = [
     description: "Plastic ruler, clear with metric and imperial",
     category: "Tools",
     unit: "pcs",
+    stockMonth: 2,
+    stockYear: 2026,
+    requestedQuantity: 46,
+    receivedQuantity: 39,
   },
   {
     sku: "OFF-FOL-001",
@@ -160,6 +242,10 @@ const OFFICE_SUPPLIES: OfficeSupplyItem[] = [
     description: "Letter size manila folders",
     category: "Organization",
     unit: "pcs",
+    stockMonth: 1,
+    stockYear: 2026,
+    requestedQuantity: 140,
+    receivedQuantity: 111,
   },
   {
     sku: "OFF-FOL-002",
@@ -167,6 +253,10 @@ const OFFICE_SUPPLIES: OfficeSupplyItem[] = [
     description: "Standard 3-ring binder",
     category: "Organization",
     unit: "pcs",
+    stockMonth: 1,
+    stockYear: 2026,
+    requestedQuantity: 52,
+    receivedQuantity: 46,
   },
   {
     sku: "OFF-CLIP-002",
@@ -174,6 +264,10 @@ const OFFICE_SUPPLIES: OfficeSupplyItem[] = [
     description: "Plastic clipboard with clip",
     category: "Organization",
     unit: "pcs",
+    stockMonth: 1,
+    stockYear: 2026,
+    requestedQuantity: 28,
+    receivedQuantity: 22,
   },
   {
     sku: "OFF-DESK-001",
@@ -181,8 +275,35 @@ const OFFICE_SUPPLIES: OfficeSupplyItem[] = [
     description: "Multi-compartment pen and supply organizer",
     category: "Organization",
     unit: "pcs",
+    stockMonth: 1,
+    stockYear: 2026,
+    requestedQuantity: 18,
+    receivedQuantity: 9,
   },
 ];
+
+const clearCollection = async (collectionName: string): Promise<number> => {
+  const db = getFirestore();
+  const colRef = db.collection(collectionName);
+  let deletedCount = 0;
+
+  // Delete in chunks to avoid large batch limits.
+  while (true) {
+    const snapshot = await colRef.limit(400).get();
+    if (snapshot.empty) {
+      break;
+    }
+
+    const batch = db.batch();
+    snapshot.docs.forEach((doc) => {
+      batch.delete(doc.ref);
+    });
+    await batch.commit();
+    deletedCount += snapshot.size;
+  }
+
+  return deletedCount;
+};
 
 const run = async (): Promise<void> => {
   const projectId = process.env.FIREBASE_PROJECT_ID;
@@ -210,6 +331,14 @@ const run = async (): Promise<void> => {
   const col = db.collection(ITEMS_COLLECTION);
   const now = new Date();
 
+  console.log("Clearing current inventory data...");
+  const deletedItems = await clearCollection(ITEMS_COLLECTION);
+  const deletedLevels = await clearCollection(LEVELS_COLLECTION);
+  const deletedMovements = await clearCollection(MOVEMENTS_COLLECTION);
+  console.log(
+    `Deleted ${deletedItems} items, ${deletedLevels} inventory levels, ${deletedMovements} movements.`
+  );
+
   console.log(`Seeding ${OFFICE_SUPPLIES.length} office supply items...`);
 
   for (const item of OFFICE_SUPPLIES) {
@@ -219,6 +348,10 @@ const run = async (): Promise<void> => {
       description: item.description ?? null,
       category: item.category,
       unit: item.unit,
+      stockMonth: item.stockMonth,
+      stockYear: item.stockYear,
+      requestedQuantity: item.requestedQuantity,
+      receivedQuantity: item.receivedQuantity,
       isActive: true,
       createdAt: now,
       updatedAt: now,
