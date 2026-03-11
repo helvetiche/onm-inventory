@@ -145,6 +145,30 @@ export function ItemDetailDrawer({
                     <dd className="text-emerald-900">{data.item.unit}</dd>
                   </div>
                   <div>
+                    <dt className="text-slate-500">Stock period</dt>
+                    <dd className="text-emerald-900">
+                      {data.item.stockMonth}/{data.item.stockYear}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-slate-500">Requested</dt>
+                    <dd className="text-emerald-900">
+                      {data.item.requestedQuantity}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-slate-500">Received</dt>
+                    <dd className="text-emerald-900">
+                      {data.item.receivedQuantity}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-slate-500">Remaining</dt>
+                    <dd className="font-medium text-emerald-900">
+                      {data.item.requestedQuantity - data.item.receivedQuantity}
+                    </dd>
+                  </div>
+                  <div>
                     <dt className="text-slate-500">Status</dt>
                     <dd>
                       <span

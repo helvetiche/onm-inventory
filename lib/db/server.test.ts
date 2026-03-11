@@ -60,6 +60,10 @@ describe("inventory repository", () => {
       unit: "pcs",
       description: "Demo",
       category: "Test",
+      stockMonth: 3,
+      stockYear: 2026,
+      requestedQuantity: 100,
+      receivedQuantity: 60,
     };
 
     const created = await repository.createItem(input);
@@ -68,6 +72,8 @@ describe("inventory repository", () => {
     expect(created.name).toBe("Test Item");
     expect(created.sku).toBe("SKU-123");
     expect(created.unit).toBe("pcs");
+    expect(created.requestedQuantity).toBe(100);
+    expect(created.receivedQuantity).toBe(60);
     expect(created.isActive).toBe(true);
 
     const all = await repository.getAllItems();

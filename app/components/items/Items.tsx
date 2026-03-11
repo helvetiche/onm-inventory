@@ -34,6 +34,20 @@ import { ItemDetailDrawer } from "./ItemDetailDrawer";
 
 const PAGE_SIZE = 8;
 const SEARCH_DEBOUNCE_MS = 300;
+const MONTH_LABELS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+] as const;
 
 type StatCardBadge = {
   icon: React.ReactNode;
@@ -307,32 +321,56 @@ export function Items(): JSX.Element {
         {isLoading && (
           <div className="overflow-x-auto">
             <table
-              className="w-full min-w-[480px] table-fixed"
+              className="w-full min-w-[900px] table-fixed"
               role="grid"
             >
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50/50">
                   <th
                     scope="col"
-                    className="w-[25%] border-r border-slate-200 px-4 py-3 text-left text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
+                    className="w-[14%] border-r border-slate-200 px-4 py-3 text-left text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
                   >
                     SKU
                   </th>
                   <th
                     scope="col"
-                    className="w-[25%] border-r border-slate-200 px-4 py-3 text-left text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
+                    className="w-[18%] border-r border-slate-200 px-4 py-3 text-left text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
                   >
                     Name
                   </th>
                   <th
                     scope="col"
-                    className="w-[25%] border-r border-slate-200 px-4 py-3 text-left text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
+                    className="w-[14%] border-r border-slate-200 px-4 py-3 text-left text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
                   >
                     Category
                   </th>
                   <th
                     scope="col"
-                    className="w-[25%] px-4 py-3 text-right text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
+                    className="w-[12%] border-r border-slate-200 px-4 py-3 text-left text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
+                  >
+                    Month/Year
+                  </th>
+                  <th
+                    scope="col"
+                    className="w-[10%] border-r border-slate-200 px-4 py-3 text-right text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
+                  >
+                    Requested
+                  </th>
+                  <th
+                    scope="col"
+                    className="w-[10%] border-r border-slate-200 px-4 py-3 text-right text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
+                  >
+                    Received
+                  </th>
+                  <th
+                    scope="col"
+                    className="w-[10%] border-r border-slate-200 px-4 py-3 text-right text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
+                  >
+                    Remaining
+                  </th>
+                  <th
+                    scope="col"
+                    className="w-[12%] px-4 py-3 text-right text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
                   >
                     Actions
                   </th>
@@ -349,6 +387,18 @@ export function Items(): JSX.Element {
                     </td>
                     <td className="border-r border-slate-100 px-4 py-4">
                       <div className="h-4 w-20 animate-pulse rounded bg-slate-200"></div>
+                    </td>
+                    <td className="border-r border-slate-100 px-4 py-4">
+                      <div className="h-4 w-16 animate-pulse rounded bg-slate-200"></div>
+                    </td>
+                    <td className="border-r border-slate-100 px-4 py-4">
+                      <div className="ml-auto h-4 w-12 animate-pulse rounded bg-slate-200"></div>
+                    </td>
+                    <td className="border-r border-slate-100 px-4 py-4">
+                      <div className="ml-auto h-4 w-12 animate-pulse rounded bg-slate-200"></div>
+                    </td>
+                    <td className="border-r border-slate-100 px-4 py-4">
+                      <div className="ml-auto h-4 w-12 animate-pulse rounded bg-slate-200"></div>
                     </td>
                     <td className="relative px-4 py-4 text-right">
                       <div className="flex items-center justify-end gap-1">
@@ -396,32 +446,56 @@ export function Items(): JSX.Element {
           <>
             <div className="overflow-x-auto">
               <table
-                className="w-full min-w-[640px] table-fixed"
+                className="w-full min-w-[900px] table-fixed"
                 role="grid"
               >
                 <thead>
                   <tr className="border-b border-slate-200 bg-slate-50/50">
                     <th
                       scope="col"
-                      className="w-[25%] border-r border-slate-200 px-4 py-3 text-left text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
+                      className="w-[14%] border-r border-slate-200 px-4 py-3 text-left text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
                     >
                       SKU
                     </th>
                     <th
                       scope="col"
-                      className="w-[25%] border-r border-slate-200 px-4 py-3 text-left text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
+                      className="w-[18%] border-r border-slate-200 px-4 py-3 text-left text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
                     >
                       Name
                     </th>
                     <th
                       scope="col"
-                      className="w-[25%] border-r border-slate-200 px-4 py-3 text-left text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
+                      className="w-[14%] border-r border-slate-200 px-4 py-3 text-left text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
                     >
                       Category
                     </th>
                     <th
                       scope="col"
-                      className="w-[25%] px-4 py-3 text-right text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
+                      className="w-[12%] border-r border-slate-200 px-4 py-3 text-left text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
+                    >
+                      Month/Year
+                    </th>
+                    <th
+                      scope="col"
+                      className="w-[10%] border-r border-slate-200 px-4 py-3 text-right text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
+                    >
+                      Requested
+                    </th>
+                    <th
+                      scope="col"
+                      className="w-[10%] border-r border-slate-200 px-4 py-3 text-right text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
+                    >
+                      Received
+                    </th>
+                    <th
+                      scope="col"
+                      className="w-[10%] border-r border-slate-200 px-4 py-3 text-right text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
+                    >
+                      Remaining
+                    </th>
+                    <th
+                      scope="col"
+                      className="w-[12%] px-4 py-3 text-right text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
                     >
                       Actions
                     </th>
@@ -445,6 +519,21 @@ export function Items(): JSX.Element {
                         <span className="block truncate">
                           {item.category ?? "—"}
                         </span>
+                      </td>
+                      <td className="border-r border-slate-100 px-4 py-4 text-[14px] text-slate-600">
+                        <span className="block truncate">
+                          {MONTH_LABELS[item.stockMonth - 1] ?? item.stockMonth}/
+                          {item.stockYear}
+                        </span>
+                      </td>
+                      <td className="border-r border-slate-100 px-4 py-4 text-right text-[14px] text-slate-600">
+                        {item.requestedQuantity}
+                      </td>
+                      <td className="border-r border-slate-100 px-4 py-4 text-right text-[14px] text-slate-600">
+                        {item.receivedQuantity}
+                      </td>
+                      <td className="border-r border-slate-100 px-4 py-4 text-right text-[14px] font-medium text-emerald-900">
+                        {item.requestedQuantity - item.receivedQuantity}
                       </td>
                       <td className="relative px-4 py-4 text-right">
                         <div className="flex items-center justify-end gap-1">
