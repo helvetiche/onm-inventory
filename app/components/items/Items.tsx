@@ -314,37 +314,25 @@ export function Items(): JSX.Element {
                 <tr className="border-b border-slate-200 bg-slate-50/50">
                   <th
                     scope="col"
-                    className="w-[16%] border-r border-slate-200 px-4 py-3 text-left text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
+                    className="w-[25%] border-r border-slate-200 px-4 py-3 text-left text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
                   >
                     SKU
                   </th>
                   <th
                     scope="col"
-                    className="w-[16%] border-r border-slate-200 px-4 py-3 text-left text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
+                    className="w-[25%] border-r border-slate-200 px-4 py-3 text-left text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
                   >
                     Name
                   </th>
                   <th
                     scope="col"
-                    className="w-[16%] border-r border-slate-200 px-4 py-3 text-left text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
+                    className="w-[25%] border-r border-slate-200 px-4 py-3 text-left text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
                   >
                     Category
                   </th>
                   <th
                     scope="col"
-                    className="w-[16%] border-r border-slate-200 px-4 py-3 text-left text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
-                  >
-                    Unit
-                  </th>
-                  <th
-                    scope="col"
-                    className="w-[16%] border-r border-slate-200 px-4 py-3 text-left text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
-                  >
-                    Status
-                  </th>
-                  <th
-                    scope="col"
-                    className="w-[20%] px-4 py-3 text-right text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
+                    className="w-[25%] px-4 py-3 text-right text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
                   >
                     Actions
                   </th>
@@ -361,12 +349,6 @@ export function Items(): JSX.Element {
                     </td>
                     <td className="border-r border-slate-100 px-4 py-4">
                       <div className="h-4 w-20 animate-pulse rounded bg-slate-200"></div>
-                    </td>
-                    <td className="border-r border-slate-100 px-4 py-4">
-                      <div className="h-4 w-12 animate-pulse rounded bg-slate-200"></div>
-                    </td>
-                    <td className="border-r border-slate-100 px-4 py-4">
-                      <div className="h-5 w-16 animate-pulse rounded-full bg-slate-200"></div>
                     </td>
                     <td className="relative px-4 py-4 text-right">
                       <div className="flex items-center justify-end gap-1">
