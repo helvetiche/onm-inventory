@@ -10,10 +10,11 @@ const updateQuarterlyDataSchema = z.object({
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
   try {
-    console.log("PATCH /api/items/[id]/quarterly called with:", params);
+    const { id } = await params;
+    console.log("PATCH /api/items/[id]/quarterly called with:", id);
     
     const json = await request.json();
     console.log("Request body:", json);
@@ -29,11 +30,10 @@ export async function PATCH(
     }
 
     const { quarter, field, value } = parsed.data;
-    const itemId = params.id;
 
-    console.log(`Updating item ${itemId}, Q${quarter}, ${field} = ${value}`);
+    console.log(`Updating item ${id}, Q${quarter}, ${field} = ${value}`);
 
-    const updatedItem = await updateItemQuarterlyData(itemId, quarter, field, value);
+    const updatedItem = await updateItemQuarterlyData(id, quarter, field, value);
 
     console.log("Update successful:", updatedItem.id);
     return NextResponse.json(updatedItem);
