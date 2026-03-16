@@ -560,46 +560,54 @@ export function Items(): JSX.Element {
                   </tr>
                 </thead>
                 <tbody>
-                  {items.map((item, index) => (
-                    <tr
-                      key={item.id}
-                      className="transition-colors hover:bg-emerald-50/50 even:bg-slate-50/30"
-                    >
-                      <td className="border-dashed border border-slate-300 px-4 py-3 text-center text-[14px] font-medium text-emerald-900">
-                        {String((currentPage - 1) * PAGE_SIZE + index + 1).padStart(3, '0')}
-                      </td>
-                      <td className="border-dashed border border-slate-300 px-4 py-3">
-                        <div className="text-[14px] font-medium text-emerald-900">
-                          {item.name}
-                        </div>
-                      </td>
-                      <td className="border-dashed border border-slate-300 px-4 py-3 text-center">
-                        <div className="text-[14px] font-medium text-emerald-900">
-                          {item.requestedQuantity - item.receivedQuantity} {item.unit}
-                        </div>
-                      </td>
-                      <td className="border-dashed border border-slate-300 px-4 py-3 text-center">
-                        <div className="text-[14px] text-slate-600">
-                          {(item.baseQuantity || 0) + item.requestedQuantity}
-                          {item.baseQuantity > 0 && (
-                            <div className="text-[11px] text-emerald-600">
-                              ({item.baseQuantity} + {item.requestedQuantity})
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                      <td className="border-dashed border border-slate-300 px-4 py-3 text-center">
-                        <div className="text-[14px] text-slate-600">
-                          {item.receivedQuantity}
-                        </div>
-                      </td>
-                      <td className="border-dashed border border-slate-300 px-4 py-3 text-center">
-                        <div className="text-[14px] text-emerald-900">
-                          {((item.baseQuantity || 0) + item.requestedQuantity) - item.receivedQuantity}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                  {items.map((item, index) => {
+                    // Extract quarterly data based on selected quarter
+                    const quarterKey = `q${selectedQuarter}` as 'q1' | 'q2' | 'q3' | 'q4';
+                    const quarterData = item[quarterKey] || { requestedQuantity: 0, receivedQuantity: 0, baseQuantity: 0 };
+                    const totalRequested = (quarterData.baseQuantity || 0) + quarterData.requestedQuantity;
+                    const remaining = totalRequested - quarterData.receivedQuantity;
+
+                    return (
+                      <tr
+                        key={item.id}
+                        className="transition-colors hover:bg-emerald-50/50 even:bg-slate-50/30"
+                      >
+                        <td className="border-dashed border border-slate-300 px-4 py-3 text-center text-[14px] font-medium text-emerald-900">
+                          {String((currentPage - 1) * PAGE_SIZE + index + 1).padStart(3, '0')}
+                        </td>
+                        <td className="border-dashed border border-slate-300 px-4 py-3">
+                          <div className="text-[14px] font-medium text-emerald-900">
+                            {item.name}
+                          </div>
+                        </td>
+                        <td className="border-dashed border border-slate-300 px-4 py-3 text-center">
+                          <div className="text-[14px] font-medium text-emerald-900">
+                            {remaining} {item.unit}
+                          </div>
+                        </td>
+                        <td className="border-dashed border border-slate-300 px-4 py-3 text-center">
+                          <div className="text-[14px] text-slate-600">
+                            {totalRequested}
+                            {(quarterData.baseQuantity || 0) > 0 && (
+                              <div className="text-[11px] text-emerald-600">
+                                ({quarterData.baseQuantity} + {quarterData.requestedQuantity})
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                        <td className="border-dashed border border-slate-300 px-4 py-3 text-center">
+                          <div className="text-[14px] text-slate-600">
+                            {quarterData.receivedQuantity}
+                          </div>
+                        </td>
+                        <td className="border-dashed border border-slate-300 px-4 py-3 text-center">
+                          <div className="text-[14px] text-emerald-900">
+                            {remaining}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

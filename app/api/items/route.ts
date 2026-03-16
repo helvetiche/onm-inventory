@@ -25,7 +25,6 @@ const createItemBodySchema = z.object({
 const limitSchema = z.coerce.number().min(1).max(100).default(8);
 const pageSchema = z.coerce.number().min(1).default(1);
 const cursorSchema = z.string().optional();
-const quarterSchema = z.coerce.number().min(1).max(4).optional();
 const yearSchema = z.coerce.number().min(2000).max(9999).optional();
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
@@ -35,7 +34,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const search = searchParams.get("search") ?? undefined;
   const category = searchParams.get("category") ?? undefined;
   const cursor = cursorSchema.parse(searchParams.get("cursor") ?? undefined);
-  const quarter = quarterSchema.parse(searchParams.get("quarter") ?? undefined);
   const year = yearSchema.parse(searchParams.get("year") ?? undefined);
 
   const result = await getItemsPaginated({
@@ -44,7 +42,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     search: search || null,
     category: category || null,
     cursor: cursor || null,
-    quarter: quarter || null,
     year: year || null,
   });
 

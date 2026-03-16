@@ -17,7 +17,6 @@ export type ItemsQueryParams = {
   search?: string | null;
   category?: string | null;
   cursor?: string | null;
-  quarter?: number | null;
   year?: number | null;
 };
 
@@ -29,6 +28,12 @@ export type ItemsPaginatedResponse = {
   nextCursor: string | null;
 };
 
+const quarterlyDataSchema = z.object({
+  requestedQuantity: z.number().int().min(0),
+  receivedQuantity: z.number().int().min(0),
+  baseQuantity: z.number().int().min(0).default(0),
+});
+
 const itemsPaginatedSchema = z.object({
   items: z.array(
     z.object({
@@ -38,12 +43,11 @@ const itemsPaginatedSchema = z.object({
       description: z.string().optional(),
       category: z.string().optional(),
       unit: z.string(),
-      stockMonth: z.number().int().min(1).max(12),
       stockYear: z.number().int().min(2000).max(9999),
-      quarter: z.number().int().min(1).max(4).optional().default(1),
-      requestedQuantity: z.number().int().min(0),
-      receivedQuantity: z.number().int().min(0),
-      baseQuantity: z.number().int().min(0).optional().default(0),
+      q1: quarterlyDataSchema.optional(),
+      q2: quarterlyDataSchema.optional(),
+      q3: quarterlyDataSchema.optional(),
+      q4: quarterlyDataSchema.optional(),
       isActive: z.boolean(),
       createdAt: z.coerce.date(),
       updatedAt: z.coerce.date(),

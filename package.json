@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "seed": "tsx scripts/seed-office-supplies.ts",
+    "seed:demo": "tsx scripts/seed-quarterly-demo.ts",
     "start": "next start",
     "lint": "eslint",
     "test": "vitest"

@@ -10,6 +10,14 @@ export const inventoryLocationSchema = z.object({
 
 export type InventoryLocation = z.infer<typeof inventoryLocationSchema>;
 
+export const quarterlyDataSchema = z.object({
+  requestedQuantity: z.number().int().min(0),
+  receivedQuantity: z.number().int().min(0),
+  baseQuantity: z.number().int().min(0).default(0),
+});
+
+export type QuarterlyData = z.infer<typeof quarterlyDataSchema>;
+
 export const inventoryItemSchema = z.object({
   id: z.string(),
   sku: z.string().min(1),
@@ -17,12 +25,12 @@ export const inventoryItemSchema = z.object({
   description: z.string().optional(),
   category: z.string().optional(),
   unit: z.string().min(1),
-  stockMonth: z.number().int().min(1).max(12),
   stockYear: z.number().int().min(2000).max(9999),
-  quarter: z.number().int().min(1).max(4).optional().default(1), // Optional with default
-  requestedQuantity: z.number().int().min(0),
-  receivedQuantity: z.number().int().min(0),
-  baseQuantity: z.number().int().min(0).optional().default(0), // Optional with default
+  // Quarterly data stored as nested objects
+  q1: quarterlyDataSchema.optional(),
+  q2: quarterlyDataSchema.optional(),
+  q3: quarterlyDataSchema.optional(),
+  q4: quarterlyDataSchema.optional(),
   isActive: z.boolean(),
   createdAt: z.date(),
   updatedAt: z.date(),

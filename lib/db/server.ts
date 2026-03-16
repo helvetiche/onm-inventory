@@ -49,7 +49,6 @@ export type GetItemsPaginatedParams = {
   search?: string | null;
   category?: string | null;
   cursor?: string | null;
-  quarter?: number | null;
   year?: number | null;
 };
 
@@ -219,7 +218,6 @@ const createInventoryDb = (): InventoryDb => {
   const buildItemsQuery = (
     searchTrimmed: string | null,
     categoryTrimmed: string | null,
-    quarter: number | null,
     year: number | null
   ): FirebaseFirestore.Query => {
     let query = db.collection(ITEMS_COLLECTION) as FirebaseFirestore.Query;
@@ -227,10 +225,6 @@ const createInventoryDb = (): InventoryDb => {
     // Apply filters in order of selectivity
     if (year) {
       query = query.where("stockYear", "==", year);
-    }
-    
-    if (quarter) {
-      query = query.where("quarter", "==", quarter);
     }
     
     if (categoryTrimmed) {
@@ -249,13 +243,13 @@ const createInventoryDb = (): InventoryDb => {
   const getItemsPaginated = async (
     params: GetItemsPaginatedParams
   ): Promise<GetItemsPaginatedResult> => {
-    const { limit, page, search, category, cursor, quarter, year } = params;
+    const { limit, page, search, category, cursor, year } = params;
     const pageSize = Math.min(Math.max(1, limit), 100);
     const pageNum = Math.max(1, page);
     const searchTrimmed = search?.trim() || null;
     const categoryTrimmed = category?.trim() || null;
 
-    const query = buildItemsQuery(searchTrimmed, categoryTrimmed, quarter, year);
+    const query = buildItemsQuery(searchTrimmed, categoryTrimmed, year);
     let paginatedQuery = query;
     if (cursor) {
       try {
