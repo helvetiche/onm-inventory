@@ -155,12 +155,13 @@ const createItemInputBaseSchema = inventoryItemSchema.omit({
   createdAt: true,
   updatedAt: true,
   isActive: true,
+  q1: true,
+  q2: true,
+  q3: true,
+  q4: true,
 });
 
-const createItemInputSchema = createItemInputBaseSchema.refine(
-  (data) => data.receivedQuantity <= (data.baseQuantity || 0) + data.requestedQuantity,
-  "Received quantity cannot exceed total requested quantity (base + requested)"
-);
+const createItemInputSchema = createItemInputBaseSchema;
 
 export type CreateItemInput = z.infer<typeof createItemInputSchema>;
 
@@ -575,12 +576,7 @@ export const createInventoryRepository = (
     if (Object.keys(parsed).length === 0) {
       return existing;
     }
-    const nextRequested =
-      parsed.requestedQuantity ?? existing.requestedQuantity;
-    const nextReceived = parsed.receivedQuantity ?? existing.receivedQuantity;
-    if (nextReceived > nextRequested) {
-      throw new Error("Received quantity cannot exceed requested quantity");
-    }
+    
     const document = await db.updateItem(id, parsed);
     return firestoreItemToDomain(document.id, document.data);
   };
