@@ -183,6 +183,7 @@ export interface InventoryRepository {
   createItem(input: CreateItemInput): Promise<InventoryItem>;
   updateItem(id: string, input: z.infer<typeof updateItemInputSchema>): Promise<InventoryItem>;
   toggleItemActive(id: string): Promise<InventoryItem>;
+  updateItemQuarterlyData(id: string, quarter: number, field: "requestedQuantity" | "receivedQuantity", value: number): Promise<InventoryItem>;
   getInventoryLevelsForItem(itemId: string): Promise<InventoryLevel[]>;
   createMovement(input: CreateMovementInput): Promise<InventoryMovement>;
   getMovementsForItem(itemId: string): Promise<InventoryMovement[]>;
@@ -591,6 +592,31 @@ export const createInventoryRepository = (
     return firestoreItemToDomain(document.id, document.data);
   };
 
+  const updateItemQuarterlyData = async (
+    id: string,
+    quarter: number,
+    field: "requestedQuantity" | "receivedQuantity",
+    value: number
+  ): Promise<InventoryItem> => {
+    const existing = await getItemById(id);
+    if (!existing) throw new Error("Item not found");
+
+    const quarterKey = `q${quarter}` as 'q1' | 'q2' | 'q3' | 'q4';
+    const currentQuarterData = existing[quarterKey] || { requestedQuantity: 0, receivedQuantity: 0, baseQuantity: 0 };
+    
+    const updatedQuarterData = {
+      ...currentQuarterData,
+      [field]: value,
+    };
+
+    const updateData = {
+      [quarterKey]: updatedQuarterData,
+    };
+
+    const document = await db.updateItem(id, updateData);
+    return firestoreItemToDomain(document.id, document.data);
+  };
+
   const getInventoryLevelsForItem = async (
     itemId: string
   ): Promise<InventoryLevel[]> => {
@@ -628,6 +654,7 @@ export const createInventoryRepository = (
     createItem,
     updateItem,
     toggleItemActive,
+    updateItemQuarterlyData,
     getInventoryLevelsForItem,
     createMovement,
     getMovementsForItem,
@@ -699,11 +726,13 @@ export const createMovement = async (
   return repository.createMovement(input);
 };
 
-export const getMovementsForItem = async (
-  itemId: string
-): Promise<InventoryMovement[]> => {
+export const updateItemQuarterlyData = async (
+  itemId: string,
+  quarter: number,
+  field: "requestedQuantity" | "receivedQuantity",
+  value: number
+): Promise<InventoryItem> => {
   const repository = createInventoryRepository(createInventoryDb());
-
-  return repository.getMovementsForItem(itemId);
+  return repository.updateItemQuarterlyData(itemId, quarter, field, value);
 };
 

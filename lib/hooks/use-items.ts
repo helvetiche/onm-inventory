@@ -84,7 +84,6 @@ const fetchItemsPaginated = async (
   if (params.search) searchParams.set("search", params.search);
   if (params.category) searchParams.set("category", params.category);
   if (params.cursor) searchParams.set("cursor", params.cursor);
-  if (params.quarter) searchParams.set("quarter", String(params.quarter));
   if (params.year) searchParams.set("year", String(params.year));
 
   const response = await fetch(`/api/items?${searchParams.toString()}`);
@@ -137,11 +136,10 @@ export const useItemsQuery = (
     search,
     category,
     cursor,
-    quarter,
     year,
   } = params;
   return useQuery({
-    queryKey: ["items", { limit, page, search, category, cursor, quarter, year }],
+    queryKey: ["items", { limit, page, search, category, cursor, year }],
     queryFn: () =>
       fetchItemsPaginated({
         limit,
@@ -149,7 +147,6 @@ export const useItemsQuery = (
         search: search ?? null,
         category: category ?? null,
         cursor: cursor ?? null,
-        quarter: quarter ?? null,
         year: year ?? null,
       }),
     placeholderData: keepPreviousData,
@@ -173,6 +170,43 @@ export const useCreateItemMutation = (): UseMutationResult<
 
   return useMutation({
     mutationFn: createItemRequest,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["items"] });
+    },
+  });
+};
+
+export const useUpdateQuarterlyDataMutation = (): UseMutationResult<
+  InventoryItem,
+  Error,
+  { itemId: string; quarter: number; field: "requestedQuantity" | "receivedQuantity"; value: number }
+> => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ itemId, quarter, field, value }) => {
+      console.log("Sending PATCH request:", { itemId, quarter, field, value });
+      
+      const response = await fetch(`/api/items/${itemId}/quarterly`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ quarter, field, value }),
+      });
+
+      console.log("Response status:", response.status);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Error response:", errorText);
+        throw new Error(`Failed to update quarterly data: ${response.status} ${errorText}`);
+      }
+
+      const result = await response.json();
+      console.log("Update successful:", result);
+      return result;
+    },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["items"] });
     },

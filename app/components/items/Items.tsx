@@ -20,6 +20,7 @@ import {
   useItemsQuery,
   useCategoriesQuery,
   useCreateItemMutation,
+  useUpdateQuarterlyDataMutation,
   type CreateItemInput,
 } from "@/lib/hooks/use-items";
 import {
@@ -109,17 +110,19 @@ export function Items(): JSX.Element {
   const [selectedQuarter, setSelectedQuarter] = useState(1);
   const [selectedYear, setSelectedYear] = useState(2026);
   const [page, setPage] = useState(1);
+  const [editingCell, setEditingCell] = useState<{itemId: string, field: 'requested' | 'received'} | null>(null);
+  const [editValue, setEditValue] = useState("");
 
   const { data, isLoading, error } = useItemsQuery({
     limit: PAGE_SIZE,
     page,
     search: searchParam || null,
     category: categoryFilter || null,
-    quarter: selectedQuarter,
     year: selectedYear,
   });
   const { data: categories = [] } = useCategoriesQuery();
   const createMutation = useCreateItemMutation();
+  const updateQuarterlyMutation = useUpdateQuarterlyDataMutation();
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [detailItemId, setDetailItemId] = useState<string | null>(null);
@@ -227,6 +230,68 @@ export function Items(): JSX.Element {
       setEditItemId(detailItemId);
       setDetailItemId(null);
     }
+  };
+
+  const handleStartEdit = (itemId: string, field: 'requested' | 'received', currentValue: number): void => {
+    setEditingCell({ itemId, field });
+    setEditValue(String(currentValue));
+  };
+
+  const handleSaveEdit = (): void => {
+    if (!editingCell) return;
+    
+    const newValue = parseInt(editValue);
+    if (isNaN(newValue) || newValue < 0) {
+      setEditingCell(null);
+      setEditValue("");
+      return;
+    }
+
+    // Map frontend field names to API field names
+    const apiFieldName = editingCell.field === 'requested' ? 'requestedQuantity' : 'receivedQuantity';
+
+    // Save to database
+    updateQuarterlyMutation.mutate({
+      itemId: editingCell.itemId,
+      quarter: selectedQuarter,
+      field: apiFieldName,
+      value: newValue,
+    }, {
+      onSuccess: () => {
+        setEditingCell(null);
+        setEditValue("");
+      },
+      onError: (error) => {
+        console.error("Failed to update quarterly data:", error);
+        // Keep editing mode open on error
+      },
+    });
+  };
+
+  const handleCancelEdit = (): void => {
+    setEditingCell(null);
+    setEditValue("");
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent): void => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      e.stopPropagation();
+      handleSaveEdit();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
+      handleCancelEdit();
+    }
+  };
+
+  const handleBlur = (): void => {
+    // Only save on blur if we're not in the middle of a keyboard action
+    setTimeout(() => {
+      if (editingCell) {
+        handleSaveEdit();
+      }
+    }, 100);
   };
 
   return (
@@ -440,22 +505,22 @@ export function Items(): JSX.Element {
               <tbody>
                 {Array.from({ length: PAGE_SIZE }, (_, i) => (
                   <tr key={i} className="even:bg-slate-50/30">
-                    <td className="border-dashed border border-slate-300 px-4 py-4 text-center">
+                    <td className="border-dashed border border-slate-300 px-4 py-4 text-center hover:bg-emerald-50 transition-colors">
                       <div className="h-5 w-8 animate-pulse rounded bg-slate-200 mx-auto" />
                     </td>
-                    <td className="border-dashed border border-slate-300 px-4 py-4">
+                    <td className="border-dashed border border-slate-300 px-4 py-4 hover:bg-emerald-50 transition-colors">
                       <div className="h-4 w-32 animate-pulse rounded bg-slate-200" />
                     </td>
-                    <td className="border-dashed border border-slate-300 px-4 py-4 text-center">
+                    <td className="border-dashed border border-slate-300 px-4 py-4 text-center hover:bg-emerald-50 transition-colors">
                       <div className="h-4 w-16 animate-pulse rounded bg-slate-200 mx-auto" />
                     </td>
-                    <td className="border-dashed border border-slate-300 px-4 py-4 text-center">
+                    <td className="border-dashed border border-slate-300 px-4 py-4 text-center hover:bg-emerald-50 transition-colors">
                       <div className="h-4 w-12 animate-pulse rounded bg-slate-200 mx-auto" />
                     </td>
-                    <td className="border-dashed border border-slate-300 px-4 py-4 text-center">
+                    <td className="border-dashed border border-slate-300 px-4 py-4 text-center hover:bg-emerald-50 transition-colors">
                       <div className="h-4 w-12 animate-pulse rounded bg-slate-200 mx-auto" />
                     </td>
-                    <td className="border-dashed border border-slate-300 px-4 py-4 text-center">
+                    <td className="border-dashed border border-slate-300 px-4 py-4 text-center hover:bg-emerald-50 transition-colors">
                       <div className="h-4 w-12 animate-pulse rounded bg-slate-200 mx-auto" />
                     </td>
                   </tr>
@@ -570,37 +635,83 @@ export function Items(): JSX.Element {
                     return (
                       <tr
                         key={item.id}
-                        className="transition-colors hover:bg-emerald-50/50 even:bg-slate-50/30"
+                        className="even:bg-slate-50/30"
                       >
-                        <td className="border-dashed border border-slate-300 px-4 py-3 text-center text-[14px] font-medium text-emerald-900">
+                        <td className="border-dashed border border-slate-300 px-4 py-3 text-center text-[14px] font-medium text-emerald-900 hover:bg-emerald-50 transition-colors">
                           {String((currentPage - 1) * PAGE_SIZE + index + 1).padStart(3, '0')}
                         </td>
-                        <td className="border-dashed border border-slate-300 px-4 py-3">
+                        <td className="border-dashed border border-slate-300 px-4 py-3 hover:bg-emerald-50 transition-colors">
                           <div className="text-[14px] font-medium text-emerald-900">
                             {item.name}
                           </div>
                         </td>
-                        <td className="border-dashed border border-slate-300 px-4 py-3 text-center">
+                        <td className="border-dashed border border-slate-300 px-4 py-3 text-center hover:bg-emerald-50 transition-colors">
                           <div className="text-[14px] font-medium text-emerald-900">
                             {remaining} {item.unit}
                           </div>
                         </td>
-                        <td className="border-dashed border border-slate-300 px-4 py-3 text-center">
-                          <div className="text-[14px] text-slate-600">
-                            {totalRequested}
-                            {(quarterData.baseQuantity || 0) > 0 && (
-                              <div className="text-[11px] text-emerald-600">
-                                ({quarterData.baseQuantity} + {quarterData.requestedQuantity})
+                        <td className="border-dashed border border-slate-300 px-4 py-3 text-center hover:bg-emerald-50 transition-colors group relative">
+                          {editingCell?.itemId === item.id && editingCell?.field === 'requested' ? (
+                            <input
+                              type="number"
+                              value={editValue}
+                              onChange={(e) => setEditValue(e.target.value)}
+                              onKeyDown={handleKeyDown}
+                              onBlur={handleBlur}
+                              className="w-full text-center text-[14px] text-slate-600 bg-white border border-emerald-500 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-emerald-300"
+                              autoFocus
+                              min="0"
+                            />
+                          ) : (
+                            <div className="flex items-center justify-center gap-2">
+                              <div className="text-[14px] text-slate-600">
+                                {totalRequested}
+                                {(quarterData.baseQuantity || 0) > 0 && (
+                                  <div className="text-[11px] text-emerald-600">
+                                    ({quarterData.baseQuantity} + {quarterData.requestedQuantity})
+                                  </div>
+                                )}
                               </div>
-                            )}
-                          </div>
+                              <button
+                                type="button"
+                                onClick={() => handleStartEdit(item.id, 'requested', quarterData.requestedQuantity)}
+                                className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-emerald-100 rounded"
+                                aria-label="Edit requested quantity"
+                              >
+                                <PencilSimple size={14} weight="regular" className="text-emerald-600" />
+                              </button>
+                            </div>
+                          )}
                         </td>
-                        <td className="border-dashed border border-slate-300 px-4 py-3 text-center">
-                          <div className="text-[14px] text-slate-600">
-                            {quarterData.receivedQuantity}
-                          </div>
+                        <td className="border-dashed border border-slate-300 px-4 py-3 text-center hover:bg-emerald-50 transition-colors group relative">
+                          {editingCell?.itemId === item.id && editingCell?.field === 'received' ? (
+                            <input
+                              type="number"
+                              value={editValue}
+                              onChange={(e) => setEditValue(e.target.value)}
+                              onKeyDown={handleKeyDown}
+                              onBlur={handleBlur}
+                              className="w-full text-center text-[14px] text-slate-600 bg-white border border-emerald-500 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-emerald-300"
+                              autoFocus
+                              min="0"
+                            />
+                          ) : (
+                            <div className="flex items-center justify-center gap-2">
+                              <div className="text-[14px] text-slate-600">
+                                {quarterData.receivedQuantity}
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => handleStartEdit(item.id, 'received', quarterData.receivedQuantity)}
+                                className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-emerald-100 rounded"
+                                aria-label="Edit received quantity"
+                              >
+                                <PencilSimple size={14} weight="regular" className="text-emerald-600" />
+                              </button>
+                            </div>
+                          )}
                         </td>
-                        <td className="border-dashed border border-slate-300 px-4 py-3 text-center">
+                        <td className="border-dashed border border-slate-300 px-4 py-3 text-center hover:bg-emerald-50 transition-colors">
                           <div className="text-[14px] text-emerald-900">
                             {remaining}
                           </div>
