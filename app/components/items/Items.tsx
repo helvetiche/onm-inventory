@@ -324,7 +324,7 @@ export function Items(): JSX.Element {
         {isLoading && (
           <div className="overflow-x-auto">
             <table
-              className="w-full min-w-[600px] table-fixed border-collapse"
+              className="w-full min-w-[800px] table-fixed border-collapse"
               role="grid"
               style={{ borderSpacing: 0 }}
             >
@@ -332,53 +332,80 @@ export function Items(): JSX.Element {
                 <tr className="bg-emerald-900">
                   <th
                     scope="col"
-                    className="w-[15%] border border-emerald-800 px-4 py-3 text-left text-[13px] font-semibold text-white"
+                    className="w-[16.66%] border-dashed border border-emerald-800 px-4 py-3 text-center text-[13px] font-normal text-white"
                   >
-                    Item No.
+                    <div className="flex items-center justify-center gap-2">
+                      <Package size={16} weight="regular" aria-hidden />
+                      No.
+                    </div>
                   </th>
                   <th
                     scope="col"
-                    className="w-[55%] border border-emerald-800 px-4 py-3 text-left text-[13px] font-semibold text-white"
+                    className="w-[16.66%] border-dashed border border-emerald-800 px-4 py-3 text-center text-[13px] font-normal text-white"
                   >
-                    Particulars
+                    <div className="flex items-center justify-center gap-2">
+                      <Tag size={16} weight="regular" aria-hidden />
+                      Particulars
+                    </div>
                   </th>
                   <th
                     scope="col"
-                    className="w-[20%] border border-emerald-800 px-4 py-3 text-center text-[13px] font-semibold text-white"
+                    className="w-[16.66%] border-dashed border border-emerald-800 px-4 py-3 text-center text-[13px] font-normal text-white"
                   >
-                    Stocks & Units
+                    <div className="flex items-center justify-center gap-2">
+                      <Stack size={16} weight="regular" aria-hidden />
+                      Stocks
+                    </div>
                   </th>
                   <th
                     scope="col"
-                    className="w-[10%] border border-emerald-800 px-4 py-3 text-center text-[13px] font-semibold text-white"
+                    className="w-[16.66%] border-dashed border border-emerald-800 px-4 py-3 text-center text-[13px] font-normal text-white"
                   >
-                    Actions
+                    <div className="flex items-center justify-center gap-2">
+                      <Plus size={16} weight="regular" aria-hidden />
+                      Requested
+                    </div>
+                  </th>
+                  <th
+                    scope="col"
+                    className="w-[16.66%] border-dashed border border-emerald-800 px-4 py-3 text-center text-[13px] font-normal text-white"
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      <Archive size={16} weight="regular" aria-hidden />
+                      Received
+                    </div>
+                  </th>
+                  <th
+                    scope="col"
+                    className="w-[16.66%] border-dashed border border-emerald-800 px-4 py-3 text-center text-[13px] font-normal text-white"
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      <Cube size={16} weight="regular" aria-hidden />
+                      Remaining
+                    </div>
                   </th>
                 </tr>
               </thead>
               <tbody>
                 {Array.from({ length: PAGE_SIZE }, (_, i) => (
                   <tr key={i} className="even:bg-slate-50/30">
-                    <td className="border border-slate-300 px-4 py-4">
-                      <div className="h-5 w-8 animate-pulse rounded bg-slate-200" />
+                    <td className="border-dashed border border-slate-300 px-4 py-4 text-center">
+                      <div className="h-5 w-8 animate-pulse rounded bg-slate-200 mx-auto" />
                     </td>
-                    <td className="border border-slate-300 px-4 py-4">
-                      <div className="space-y-2">
-                        <div className="h-4 w-32 animate-pulse rounded bg-slate-200" />
-                        <div className="h-3 w-24 animate-pulse rounded bg-slate-200" />
-                      </div>
+                    <td className="border-dashed border border-slate-300 px-4 py-4">
+                      <div className="h-4 w-32 animate-pulse rounded bg-slate-200" />
                     </td>
-                    <td className="border border-slate-300 px-4 py-4">
-                      <div className="flex flex-col items-center space-y-1">
-                        <div className="h-5 w-8 animate-pulse rounded bg-slate-200" />
-                        <div className="h-3 w-12 animate-pulse rounded bg-slate-200" />
-                      </div>
+                    <td className="border-dashed border border-slate-300 px-4 py-4 text-center">
+                      <div className="h-4 w-16 animate-pulse rounded bg-slate-200 mx-auto" />
                     </td>
-                    <td className="border border-slate-300 px-4 py-4">
-                      <div className="flex items-center justify-center gap-1">
-                        <div className="h-7 w-7 animate-pulse rounded bg-slate-200" />
-                        <div className="h-7 w-7 animate-pulse rounded bg-slate-200" />
-                      </div>
+                    <td className="border-dashed border border-slate-300 px-4 py-4 text-center">
+                      <div className="h-4 w-12 animate-pulse rounded bg-slate-200 mx-auto" />
+                    </td>
+                    <td className="border-dashed border border-slate-300 px-4 py-4 text-center">
+                      <div className="h-4 w-12 animate-pulse rounded bg-slate-200 mx-auto" />
+                    </td>
+                    <td className="border-dashed border border-slate-300 px-4 py-4 text-center">
+                      <div className="h-4 w-12 animate-pulse rounded bg-slate-200 mx-auto" />
                     </td>
                   </tr>
                 ))}
@@ -427,39 +454,57 @@ export function Items(): JSX.Element {
                   <tr className="bg-emerald-900">
                     <th
                       scope="col"
-                      className="w-[10%] border border-emerald-800 px-4 py-3 text-center text-[13px] font-semibold text-white"
+                      className="w-[16.66%] border-dashed border border-emerald-800 px-4 py-3 text-center text-[13px] font-normal text-white"
                     >
-                      No.
+                      <div className="flex items-center justify-center gap-2">
+                        <Package size={16} weight="regular" aria-hidden />
+                        No.
+                      </div>
                     </th>
                     <th
                       scope="col"
-                      className="w-[35%] border border-emerald-800 px-4 py-3 text-left text-[13px] font-semibold text-white"
+                      className="w-[16.66%] border-dashed border border-emerald-800 px-4 py-3 text-center text-[13px] font-normal text-white"
                     >
-                      Particulars
+                      <div className="flex items-center justify-center gap-2">
+                        <Tag size={16} weight="regular" aria-hidden />
+                        Particulars
+                      </div>
                     </th>
                     <th
                       scope="col"
-                      className="w-[15%] border border-emerald-800 px-4 py-3 text-center text-[13px] font-semibold text-white"
+                      className="w-[16.66%] border-dashed border border-emerald-800 px-4 py-3 text-center text-[13px] font-normal text-white"
                     >
-                      Stocks
+                      <div className="flex items-center justify-center gap-2">
+                        <Stack size={16} weight="regular" aria-hidden />
+                        Stocks
+                      </div>
                     </th>
                     <th
                       scope="col"
-                      className="w-[15%] border border-emerald-800 px-4 py-3 text-center text-[13px] font-semibold text-white"
+                      className="w-[16.66%] border-dashed border border-emerald-800 px-4 py-3 text-center text-[13px] font-normal text-white"
                     >
-                      Requested
+                      <div className="flex items-center justify-center gap-2">
+                        <Plus size={16} weight="regular" aria-hidden />
+                        Requested
+                      </div>
                     </th>
                     <th
                       scope="col"
-                      className="w-[15%] border border-emerald-800 px-4 py-3 text-center text-[13px] font-semibold text-white"
+                      className="w-[16.66%] border-dashed border border-emerald-800 px-4 py-3 text-center text-[13px] font-normal text-white"
                     >
-                      Received
+                      <div className="flex items-center justify-center gap-2">
+                        <Archive size={16} weight="regular" aria-hidden />
+                        Received
+                      </div>
                     </th>
                     <th
                       scope="col"
-                      className="w-[10%] border border-emerald-800 px-4 py-3 text-center text-[13px] font-semibold text-white"
+                      className="w-[16.66%] border-dashed border border-emerald-800 px-4 py-3 text-center text-[13px] font-normal text-white"
                     >
-                      Remaining
+                      <div className="flex items-center justify-center gap-2">
+                        <Cube size={16} weight="regular" aria-hidden />
+                        Remaining
+                      </div>
                     </th>
                   </tr>
                 </thead>
@@ -469,31 +514,31 @@ export function Items(): JSX.Element {
                       key={item.id}
                       className="transition-colors hover:bg-emerald-50/50 even:bg-slate-50/30"
                     >
-                      <td className="border border-slate-300 px-4 py-3 text-center text-[14px] font-medium text-emerald-900">
-                        {(currentPage - 1) * PAGE_SIZE + index + 1}
+                      <td className="border-dashed border border-slate-300 px-4 py-3 text-center text-[14px] font-medium text-emerald-900">
+                        {String((currentPage - 1) * PAGE_SIZE + index + 1).padStart(3, '0')}
                       </td>
-                      <td className="border border-slate-300 px-4 py-3">
+                      <td className="border-dashed border border-slate-300 px-4 py-3">
                         <div className="text-[14px] font-medium text-emerald-900">
                           {item.name}
                         </div>
                       </td>
-                      <td className="border border-slate-300 px-4 py-3 text-center">
+                      <td className="border-dashed border border-slate-300 px-4 py-3 text-center">
                         <div className="text-[14px] font-medium text-emerald-900">
                           {item.requestedQuantity - item.receivedQuantity} {item.unit}
                         </div>
                       </td>
-                      <td className="border border-slate-300 px-4 py-3 text-center">
+                      <td className="border-dashed border border-slate-300 px-4 py-3 text-center">
                         <div className="text-[14px] text-slate-600">
                           {item.requestedQuantity}
                         </div>
                       </td>
-                      <td className="border border-slate-300 px-4 py-3 text-center">
+                      <td className="border-dashed border border-slate-300 px-4 py-3 text-center">
                         <div className="text-[14px] text-slate-600">
                           {item.receivedQuantity}
                         </div>
                       </td>
-                      <td className="border border-slate-300 px-4 py-3 text-center">
-                        <div className="text-[14px] font-bold text-emerald-900">
+                      <td className="border-dashed border border-slate-300 px-4 py-3 text-center">
+                        <div className="text-[14px] text-emerald-900">
                           {item.requestedQuantity - item.receivedQuantity}
                         </div>
                       </td>
