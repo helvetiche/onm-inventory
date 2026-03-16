@@ -248,7 +248,7 @@ export function Items(): JSX.Element {
     }
 
     // Map frontend field names to API field names
-    const apiFieldName = editingCell.field === 'requested' ? 'requestedQuantity' : 'receivedQuantity';
+    const apiFieldName: "requestedQuantity" | "receivedQuantity" = editingCell.field === 'requested' ? 'requestedQuantity' : 'receivedQuantity';
 
     // Save to database
     updateQuarterlyMutation.mutate({
