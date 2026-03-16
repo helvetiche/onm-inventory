@@ -558,6 +558,10 @@ export const createInventoryRepository = (
 
     const document = await db.createItem({
       ...parsedInput,
+      q1: { requestedQuantity: 0, receivedQuantity: 0, baseQuantity: 0 },
+      q2: { requestedQuantity: 0, receivedQuantity: 0, baseQuantity: 0 },
+      q3: { requestedQuantity: 0, receivedQuantity: 0, baseQuantity: 0 },
+      q4: { requestedQuantity: 0, receivedQuantity: 0, baseQuantity: 0 },
       isActive: true,
       createdAt: now,
       updatedAt: now,
