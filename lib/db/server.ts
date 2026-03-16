@@ -49,6 +49,8 @@ export type GetItemsPaginatedParams = {
   search?: string | null;
   category?: string | null;
   cursor?: string | null;
+  quarter?: number | null;
+  year?: number | null;
 };
 
 export type GetItemsPaginatedResult = {
@@ -157,8 +159,8 @@ const createItemInputBaseSchema = inventoryItemSchema.omit({
 });
 
 const createItemInputSchema = createItemInputBaseSchema.refine(
-  (data) => data.receivedQuantity <= data.requestedQuantity,
-  "Received quantity cannot exceed requested quantity"
+  (data) => data.receivedQuantity <= (data.baseQuantity || 0) + data.requestedQuantity,
+  "Received quantity cannot exceed total requested quantity (base + requested)"
 );
 
 export type CreateItemInput = z.infer<typeof createItemInputSchema>;
@@ -216,43 +218,44 @@ const createInventoryDb = (): InventoryDb => {
 
   const buildItemsQuery = (
     searchTrimmed: string | null,
-    categoryTrimmed: string | null
+    categoryTrimmed: string | null,
+    quarter: number | null,
+    year: number | null
   ): FirebaseFirestore.Query => {
-    const col = db.collection(ITEMS_COLLECTION);
-    if (categoryTrimmed && searchTrimmed) {
-      return col
-        .where("category", "==", categoryTrimmed)
-        .where("name", ">=", searchTrimmed)
-        .where("name", "<=", searchTrimmed + "\uf8ff")
-        .orderBy("name", "asc")
-        .orderBy(FieldPath.documentId(), "asc");
+    let query = db.collection(ITEMS_COLLECTION) as FirebaseFirestore.Query;
+    
+    // Apply filters in order of selectivity
+    if (year) {
+      query = query.where("stockYear", "==", year);
     }
+    
+    if (quarter) {
+      query = query.where("quarter", "==", quarter);
+    }
+    
     if (categoryTrimmed) {
-      return col
-        .where("category", "==", categoryTrimmed)
-        .orderBy("name", "asc")
-        .orderBy(FieldPath.documentId(), "asc");
+      query = query.where("category", "==", categoryTrimmed);
     }
+    
     if (searchTrimmed) {
-      return col
+      query = query
         .where("name", ">=", searchTrimmed)
-        .where("name", "<=", searchTrimmed + "\uf8ff")
-        .orderBy("name", "asc")
-        .orderBy(FieldPath.documentId(), "asc");
+        .where("name", "<=", searchTrimmed + "\uf8ff");
     }
-    return col.orderBy("name", "asc").orderBy(FieldPath.documentId(), "asc");
+    
+    return query.orderBy("name", "asc").orderBy(FieldPath.documentId(), "asc");
   };
 
   const getItemsPaginated = async (
     params: GetItemsPaginatedParams
   ): Promise<GetItemsPaginatedResult> => {
-    const { limit, page, search, category, cursor } = params;
+    const { limit, page, search, category, cursor, quarter, year } = params;
     const pageSize = Math.min(Math.max(1, limit), 100);
     const pageNum = Math.max(1, page);
     const searchTrimmed = search?.trim() || null;
     const categoryTrimmed = category?.trim() || null;
 
-    const query = buildItemsQuery(searchTrimmed, categoryTrimmed);
+    const query = buildItemsQuery(searchTrimmed, categoryTrimmed, quarter, year);
     let paginatedQuery = query;
     if (cursor) {
       try {

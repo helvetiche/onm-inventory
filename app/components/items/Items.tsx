@@ -106,6 +106,8 @@ export function Items(): JSX.Element {
   const [searchInput, setSearchInput] = useState("");
   const [searchParam, setSearchParam] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
+  const [selectedQuarter, setSelectedQuarter] = useState(1);
+  const [selectedYear, setSelectedYear] = useState(2026);
   const [page, setPage] = useState(1);
 
   const { data, isLoading, error } = useItemsQuery({
@@ -113,6 +115,8 @@ export function Items(): JSX.Element {
     page,
     search: searchParam || null,
     category: categoryFilter || null,
+    quarter: selectedQuarter,
+    year: selectedYear,
   });
   const { data: categories = [] } = useCategoriesQuery();
   const createMutation = useCreateItemMutation();
@@ -230,21 +234,34 @@ export function Items(): JSX.Element {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
           <h1 className="text-lg font-medium tracking-tight text-emerald-900">
-            Items
+            Items - Q{selectedQuarter} {selectedYear}
           </h1>
           <span className="rounded-full bg-emerald-50 px-3 py-1 text-[13px] font-normal text-emerald-800">
             {totalCount} total
             {activeCount > 0 ? ` · ${activeCount} active` : ""}
           </span>
         </div>
-        <button
-          type="button"
-          onClick={() => setIsCreateModalOpen(true)}
-          className="inline-flex items-center gap-2 rounded-md bg-emerald-900 px-4 py-2.5 text-[14px] font-medium text-white transition-colors hover:bg-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:ring-offset-2"
-        >
-          <Plus size={18} weight="regular" aria-hidden />
-          Add item
-        </button>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setIsCreateModalOpen(true)}
+            className="inline-flex items-center gap-2 rounded-md bg-emerald-900 px-4 py-2.5 text-[14px] font-medium text-white transition-colors hover:bg-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:ring-offset-2"
+          >
+            <Plus size={18} weight="regular" aria-hidden />
+            Add item
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              // TODO: Implement rollover logic
+              alert(`Rolling over remaining items from Q${selectedQuarter} to Q${selectedQuarter === 4 ? 1 : selectedQuarter + 1}`);
+            }}
+            className="inline-flex items-center gap-2 rounded-md border border-emerald-900 px-4 py-2.5 text-[14px] font-medium text-emerald-900 transition-colors hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:ring-offset-2"
+          >
+            <Archive size={18} weight="regular" aria-hidden />
+            Rollover to Next Quarter
+          </button>
+        </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -318,6 +335,40 @@ export function Items(): JSX.Element {
             </option>
           ))}
         </select>
+        <select
+          value={selectedYear}
+          onChange={(e) => {
+            setSelectedYear(Number(e.target.value));
+            setPage(1);
+          }}
+          className="rounded-md border border-slate-200 bg-white px-4 py-2.5 text-[14px] text-emerald-900 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 sm:w-32"
+          aria-label="Select year"
+        >
+          <option value={2024}>2024</option>
+          <option value={2025}>2025</option>
+          <option value={2026}>2026</option>
+          <option value={2027}>2027</option>
+        </select>
+        <div className="flex rounded-md border border-slate-200 bg-white">
+          {[1, 2, 3, 4].map((quarter) => (
+            <button
+              key={quarter}
+              type="button"
+              onClick={() => {
+                setSelectedQuarter(quarter);
+                setPage(1);
+              }}
+              className={`px-4 py-2.5 text-[14px] font-medium transition-colors first:rounded-l-md last:rounded-r-md ${
+                selectedQuarter === quarter
+                  ? "bg-emerald-900 text-white"
+                  : "text-emerald-900 hover:bg-emerald-50"
+              }`}
+              aria-label={`Quarter ${quarter}`}
+            >
+              Q{quarter}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="overflow-hidden rounded-lg border border-slate-100 bg-white shadow-[0_1px_3px_0_rgba(0,0,0,0.05)]">
@@ -529,7 +580,12 @@ export function Items(): JSX.Element {
                       </td>
                       <td className="border-dashed border border-slate-300 px-4 py-3 text-center">
                         <div className="text-[14px] text-slate-600">
-                          {item.requestedQuantity}
+                          {(item.baseQuantity || 0) + item.requestedQuantity}
+                          {item.baseQuantity > 0 && (
+                            <div className="text-[11px] text-emerald-600">
+                              ({item.baseQuantity} + {item.requestedQuantity})
+                            </div>
+                          )}
                         </div>
                       </td>
                       <td className="border-dashed border border-slate-300 px-4 py-3 text-center">
@@ -539,7 +595,7 @@ export function Items(): JSX.Element {
                       </td>
                       <td className="border-dashed border border-slate-300 px-4 py-3 text-center">
                         <div className="text-[14px] text-emerald-900">
-                          {item.requestedQuantity - item.receivedQuantity}
+                          {((item.baseQuantity || 0) + item.requestedQuantity) - item.receivedQuantity}
                         </div>
                       </td>
                     </tr>

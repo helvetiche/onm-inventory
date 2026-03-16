@@ -17,6 +17,8 @@ export type ItemsQueryParams = {
   search?: string | null;
   category?: string | null;
   cursor?: string | null;
+  quarter?: number | null;
+  year?: number | null;
 };
 
 export type ItemsPaginatedResponse = {
@@ -38,8 +40,10 @@ const itemsPaginatedSchema = z.object({
       unit: z.string(),
       stockMonth: z.number().int().min(1).max(12),
       stockYear: z.number().int().min(2000).max(9999),
+      quarter: z.number().int().min(1).max(4).optional().default(1),
       requestedQuantity: z.number().int().min(0),
       receivedQuantity: z.number().int().min(0),
+      baseQuantity: z.number().int().min(0).optional().default(0),
       isActive: z.boolean(),
       createdAt: z.coerce.date(),
       updatedAt: z.coerce.date(),
@@ -59,8 +63,10 @@ const createItemInputSchema = z.object({
   unit: z.string().min(1),
   stockMonth: z.number().int().min(1).max(12),
   stockYear: z.number().int().min(2000).max(9999),
+  quarter: z.number().int().min(1).max(4).optional().default(1),
   requestedQuantity: z.number().int().min(0),
   receivedQuantity: z.number().int().min(0),
+  baseQuantity: z.number().int().min(0).optional().default(0),
 });
 
 export type CreateItemInput = z.infer<typeof createItemInputSchema>;
@@ -74,31 +80,17 @@ const fetchItemsPaginated = async (
   if (params.search) searchParams.set("search", params.search);
   if (params.category) searchParams.set("category", params.category);
   if (params.cursor) searchParams.set("cursor", params.cursor);
+  if (params.quarter) searchParams.set("quarter", String(params.quarter));
+  if (params.year) searchParams.set("year", String(params.year));
 
-  const url = `/api/items?${searchParams.toString()}`;
-  console.log("Fetching items from:", url);
-
-  const response = await fetch(url);
-  console.log("Response status:", response.status, response.statusText);
+  const response = await fetch(`/api/items?${searchParams.toString()}`);
 
   if (!response.ok) {
-    const errorText = await response.text();
-    console.error("API Error:", errorText);
-    throw new Error(`Failed to fetch items: ${response.status} ${errorText}`);
+    throw new Error("Failed to fetch items");
   }
 
   const json = await response.json();
-  console.log("Raw API response:", json);
-  
-  try {
-    const parsed = itemsPaginatedSchema.parse(json);
-    console.log("Parsed successfully:", parsed);
-    return parsed as ItemsPaginatedResponse;
-  } catch (parseError) {
-    console.error("Schema parse error:", parseError);
-    console.error("Raw data that failed to parse:", json);
-    throw new Error(`Failed to parse response: ${parseError}`);
-  }
+  return itemsPaginatedSchema.parse(json) as ItemsPaginatedResponse;
 };
 
 const fetchCategories = async (): Promise<string[]> => {
@@ -141,9 +133,11 @@ export const useItemsQuery = (
     search,
     category,
     cursor,
+    quarter,
+    year,
   } = params;
   return useQuery({
-    queryKey: ["items", { limit, page, search, category, cursor }],
+    queryKey: ["items", { limit, page, search, category, cursor, quarter, year }],
     queryFn: () =>
       fetchItemsPaginated({
         limit,
@@ -151,6 +145,8 @@ export const useItemsQuery = (
         search: search ?? null,
         category: category ?? null,
         cursor: cursor ?? null,
+        quarter: quarter ?? null,
+        year: year ?? null,
       }),
     placeholderData: keepPreviousData,
   });
