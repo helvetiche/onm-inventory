@@ -324,90 +324,60 @@ export function Items(): JSX.Element {
         {isLoading && (
           <div className="overflow-x-auto">
             <table
-              className="w-full min-w-[900px] table-fixed"
+              className="w-full min-w-[600px] table-fixed border-collapse"
               role="grid"
+              style={{ borderSpacing: 0 }}
             >
               <thead>
-                <tr className="border-b border-slate-200 bg-slate-50/50">
+                <tr className="bg-emerald-900">
                   <th
                     scope="col"
-                    className="w-[14%] border-r border-slate-200 px-4 py-3 text-left text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
+                    className="w-[15%] border border-emerald-800 px-4 py-3 text-left text-[13px] font-semibold text-white"
                   >
-                    SKU
+                    Item No.
                   </th>
                   <th
                     scope="col"
-                    className="w-[18%] border-r border-slate-200 px-4 py-3 text-left text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
+                    className="w-[55%] border border-emerald-800 px-4 py-3 text-left text-[13px] font-semibold text-white"
                   >
-                    Name
+                    Particulars
                   </th>
                   <th
                     scope="col"
-                    className="w-[14%] border-r border-slate-200 px-4 py-3 text-left text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
+                    className="w-[20%] border border-emerald-800 px-4 py-3 text-center text-[13px] font-semibold text-white"
                   >
-                    Category
+                    Stocks & Units
                   </th>
                   <th
                     scope="col"
-                    className="w-[12%] border-r border-slate-200 px-4 py-3 text-left text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
-                  >
-                    Month/Year
-                  </th>
-                  <th
-                    scope="col"
-                    className="w-[10%] border-r border-slate-200 px-4 py-3 text-right text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
-                  >
-                    Requested
-                  </th>
-                  <th
-                    scope="col"
-                    className="w-[10%] border-r border-slate-200 px-4 py-3 text-right text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
-                  >
-                    Received
-                  </th>
-                  <th
-                    scope="col"
-                    className="w-[10%] border-r border-slate-200 px-4 py-3 text-right text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
-                  >
-                    Remaining
-                  </th>
-                  <th
-                    scope="col"
-                    className="w-[12%] px-4 py-3 text-right text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
+                    className="w-[10%] border border-emerald-800 px-4 py-3 text-center text-[13px] font-semibold text-white"
                   >
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody>
                 {Array.from({ length: PAGE_SIZE }, (_, i) => (
-                  <tr key={i} className="transition-colors hover:bg-slate-50/50">
-                    <td className="border-r border-slate-100 px-4 py-4">
-                      <div className="h-5 w-16 animate-pulse rounded bg-slate-200" />
+                  <tr key={i} className="even:bg-slate-50/30">
+                    <td className="border border-slate-300 px-4 py-4">
+                      <div className="h-5 w-8 animate-pulse rounded bg-slate-200" />
                     </td>
-                    <td className="border-r border-slate-100 px-4 py-4">
-                      <div className="h-4 w-24 animate-pulse rounded bg-slate-200" />
+                    <td className="border border-slate-300 px-4 py-4">
+                      <div className="space-y-2">
+                        <div className="h-4 w-32 animate-pulse rounded bg-slate-200" />
+                        <div className="h-3 w-24 animate-pulse rounded bg-slate-200" />
+                      </div>
                     </td>
-                    <td className="border-r border-slate-100 px-4 py-4">
-                      <div className="h-4 w-20 animate-pulse rounded bg-slate-200" />
+                    <td className="border border-slate-300 px-4 py-4">
+                      <div className="flex flex-col items-center space-y-1">
+                        <div className="h-5 w-8 animate-pulse rounded bg-slate-200" />
+                        <div className="h-3 w-12 animate-pulse rounded bg-slate-200" />
+                      </div>
                     </td>
-                    <td className="border-r border-slate-100 px-4 py-4">
-                      <div className="h-4 w-16 animate-pulse rounded bg-slate-200" />
-                    </td>
-                    <td className="border-r border-slate-100 px-4 py-4">
-                      <div className="ml-auto h-4 w-12 animate-pulse rounded bg-slate-200" />
-                    </td>
-                    <td className="border-r border-slate-100 px-4 py-4">
-                      <div className="ml-auto h-4 w-12 animate-pulse rounded bg-slate-200" />
-                    </td>
-                    <td className="border-r border-slate-100 px-4 py-4">
-                      <div className="ml-auto h-4 w-12 animate-pulse rounded bg-slate-200" />
-                    </td>
-                    <td className="relative px-4 py-4 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <div className="h-8 w-8 animate-pulse rounded-md bg-slate-200" />
-                        <div className="h-8 w-8 animate-pulse rounded-md bg-slate-200" />
-                        <div className="h-8 w-8 animate-pulse rounded-md bg-slate-200" />
+                    <td className="border border-slate-300 px-4 py-4">
+                      <div className="flex items-center justify-center gap-1">
+                        <div className="h-7 w-7 animate-pulse rounded bg-slate-200" />
+                        <div className="h-7 w-7 animate-pulse rounded bg-slate-200" />
                       </div>
                     </td>
                   </tr>
@@ -449,180 +419,82 @@ export function Items(): JSX.Element {
           <>
             <div className="overflow-x-auto">
               <table
-                className="w-full min-w-[900px] table-fixed"
+                className="w-full min-w-[800px] table-fixed border-collapse"
                 role="grid"
+                style={{ borderSpacing: 0 }}
               >
                 <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50/50">
+                  <tr className="bg-emerald-900">
                     <th
                       scope="col"
-                      className="w-[14%] border-r border-slate-200 px-4 py-3 text-left text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
+                      className="w-[10%] border border-emerald-800 px-4 py-3 text-center text-[13px] font-semibold text-white"
                     >
-                      SKU
+                      No.
                     </th>
                     <th
                       scope="col"
-                      className="w-[18%] border-r border-slate-200 px-4 py-3 text-left text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
+                      className="w-[35%] border border-emerald-800 px-4 py-3 text-left text-[13px] font-semibold text-white"
                     >
-                      Name
+                      Particulars
                     </th>
                     <th
                       scope="col"
-                      className="w-[14%] border-r border-slate-200 px-4 py-3 text-left text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
+                      className="w-[15%] border border-emerald-800 px-4 py-3 text-center text-[13px] font-semibold text-white"
                     >
-                      Category
+                      Stocks
                     </th>
                     <th
                       scope="col"
-                      className="w-[12%] border-r border-slate-200 px-4 py-3 text-left text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
-                    >
-                      Month/Year
-                    </th>
-                    <th
-                      scope="col"
-                      className="w-[10%] border-r border-slate-200 px-4 py-3 text-right text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
+                      className="w-[15%] border border-emerald-800 px-4 py-3 text-center text-[13px] font-semibold text-white"
                     >
                       Requested
                     </th>
                     <th
                       scope="col"
-                      className="w-[10%] border-r border-slate-200 px-4 py-3 text-right text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
+                      className="w-[15%] border border-emerald-800 px-4 py-3 text-center text-[13px] font-semibold text-white"
                     >
                       Received
                     </th>
                     <th
                       scope="col"
-                      className="w-[10%] border-r border-slate-200 px-4 py-3 text-right text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
+                      className="w-[10%] border border-emerald-800 px-4 py-3 text-center text-[13px] font-semibold text-white"
                     >
                       Remaining
                     </th>
-                    <th
-                      scope="col"
-                      className="w-[12%] px-4 py-3 text-right text-[12px] font-medium uppercase tracking-wider text-emerald-900/70"
-                    >
-                      Actions
-                    </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {items.map((item) => (
+                <tbody>
+                  {items.map((item, index) => (
                     <tr
                       key={item.id}
-                      className="transition-colors hover:bg-slate-50/50"
+                      className="transition-colors hover:bg-emerald-50/50 even:bg-slate-50/30"
                     >
-                      <td className="border-r border-slate-100 px-4 py-4">
-                        <span className="block truncate font-medium text-emerald-900">
-                          {item.sku}
-                        </span>
+                      <td className="border border-slate-300 px-4 py-3 text-center text-[14px] font-medium text-emerald-900">
+                        {(currentPage - 1) * PAGE_SIZE + index + 1}
                       </td>
-                      <td className="border-r border-slate-100 px-4 py-4 text-[14px] text-emerald-900">
-                        <span className="block truncate">{item.name}</span>
+                      <td className="border border-slate-300 px-4 py-3">
+                        <div className="text-[14px] font-medium text-emerald-900">
+                          {item.name}
+                        </div>
                       </td>
-                      <td className="border-r border-slate-100 px-4 py-4 text-[14px] text-slate-600">
-                        <span className="block truncate">
-                          {item.category ?? "—"}
-                        </span>
+                      <td className="border border-slate-300 px-4 py-3 text-center">
+                        <div className="text-[14px] font-medium text-emerald-900">
+                          {item.requestedQuantity - item.receivedQuantity} {item.unit}
+                        </div>
                       </td>
-                      <td className="border-r border-slate-100 px-4 py-4 text-[14px] text-slate-600">
-                        <span className="block truncate">
-                          {MONTH_LABELS[item.stockMonth - 1] ?? item.stockMonth}/
-                          {item.stockYear}
-                        </span>
+                      <td className="border border-slate-300 px-4 py-3 text-center">
+                        <div className="text-[14px] text-slate-600">
+                          {item.requestedQuantity}
+                        </div>
                       </td>
-                      <td className="border-r border-slate-100 px-4 py-4 text-right text-[14px] text-slate-600">
-                        {item.requestedQuantity}
+                      <td className="border border-slate-300 px-4 py-3 text-center">
+                        <div className="text-[14px] text-slate-600">
+                          {item.receivedQuantity}
+                        </div>
                       </td>
-                      <td className="border-r border-slate-100 px-4 py-4 text-right text-[14px] text-slate-600">
-                        {item.receivedQuantity}
-                      </td>
-                      <td className="border-r border-slate-100 px-4 py-4 text-right text-[14px] font-medium text-emerald-900">
-                        {item.requestedQuantity - item.receivedQuantity}
-                      </td>
-                      <td className="relative px-4 py-4 text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          <button
-                            type="button"
-                            onClick={() => setDetailItemId(item.id)}
-                            className="flex h-8 w-8 items-center justify-center rounded-md text-slate-500 transition-colors hover:bg-slate-100 hover:text-emerald-900 focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:ring-offset-2"
-                            aria-label={`View ${item.name}`}
-                          >
-                            <Eye size={18} weight="regular" aria-hidden />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setEditItemId(item.id);
-                              setOpenMenuId(null);
-                            }}
-                            className="flex h-8 w-8 items-center justify-center rounded-md text-slate-500 transition-colors hover:bg-slate-100 hover:text-emerald-900 focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:ring-offset-2"
-                            aria-label={`Edit ${item.name}`}
-                          >
-                            <PencilSimple
-                              size={18}
-                              weight="regular"
-                              aria-hidden
-                            />
-                          </button>
-                          <div className="relative">
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setOpenMenuId(
-                                  openMenuId === item.id ? null : item.id
-                                )
-                              }
-                              className="flex h-8 w-8 items-center justify-center rounded-md text-slate-500 transition-colors hover:bg-slate-100 hover:text-emerald-900 focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:ring-offset-2"
-                              aria-label="More actions"
-                              aria-expanded={openMenuId === item.id}
-                            >
-                              <DotsThree
-                                size={20}
-                                weight="bold"
-                                aria-hidden
-                              />
-                            </button>
-                            {openMenuId === item.id && (
-                              <>
-                                <button
-                                  type="button"
-                                  onClick={() => setOpenMenuId(null)}
-                                  className="fixed inset-0 z-10"
-                                  aria-hidden
-                                />
-                                <div
-                                  className="absolute right-0 top-full z-20 mt-1 w-40 rounded-md border border-slate-100 bg-white py-1 shadow-lg"
-                                  role="menu"
-                                >
-                                  <button
-                                    type="button"
-                                    onClick={() => handleToggleActive(item.id)}
-                                    className="flex w-full items-center gap-2 px-4 py-2 text-left text-[13px] text-emerald-900 hover:bg-slate-50"
-                                    role="menuitem"
-                                  >
-                                    {item.isActive ? (
-                                      <>
-                                        <Archive
-                                          size={16}
-                                          weight="regular"
-                                          aria-hidden
-                                        />
-                                        Deactivate
-                                      </>
-                                    ) : (
-                                      <>
-                                        <Package
-                                          size={16}
-                                          weight="regular"
-                                          aria-hidden
-                                        />
-                                        Activate
-                                      </>
-                                    )}
-                                  </button>
-                                </div>
-                              </>
-                            )}
-                          </div>
+                      <td className="border border-slate-300 px-4 py-3 text-center">
+                        <div className="text-[14px] font-bold text-emerald-900">
+                          {item.requestedQuantity - item.receivedQuantity}
                         </div>
                       </td>
                     </tr>
