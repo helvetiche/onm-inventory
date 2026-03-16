@@ -18,6 +18,8 @@ export async function PATCH(
     
     const json = await request.json();
     console.log("Request body:", json);
+    console.log("Request body field type:", typeof json.field);
+    console.log("Request body field value:", JSON.stringify(json.field));
     
     const parsed = updateQuarterlyDataSchema.safeParse(json);
 
