@@ -48,7 +48,7 @@ const itemsPaginatedSchema = z.object({
   page: z.number(),
   totalPages: z.number(),
   totalCount: z.number(),
-  nextCursor: z.string().nullable(),
+  nextCursor: z.string().nullable().optional(),
 });
 
 const createItemInputSchema = z.object({
@@ -75,14 +75,30 @@ const fetchItemsPaginated = async (
   if (params.category) searchParams.set("category", params.category);
   if (params.cursor) searchParams.set("cursor", params.cursor);
 
-  const response = await fetch(`/api/items?${searchParams.toString()}`);
+  const url = `/api/items?${searchParams.toString()}`;
+  console.log("Fetching items from:", url);
+
+  const response = await fetch(url);
+  console.log("Response status:", response.status, response.statusText);
 
   if (!response.ok) {
-    throw new Error("Failed to fetch items");
+    const errorText = await response.text();
+    console.error("API Error:", errorText);
+    throw new Error(`Failed to fetch items: ${response.status} ${errorText}`);
   }
 
   const json = await response.json();
-  return itemsPaginatedSchema.parse(json) as ItemsPaginatedResponse;
+  console.log("Raw API response:", json);
+  
+  try {
+    const parsed = itemsPaginatedSchema.parse(json);
+    console.log("Parsed successfully:", parsed);
+    return parsed as ItemsPaginatedResponse;
+  } catch (parseError) {
+    console.error("Schema parse error:", parseError);
+    console.error("Raw data that failed to parse:", json);
+    throw new Error(`Failed to parse response: ${parseError}`);
+  }
 };
 
 const fetchCategories = async (): Promise<string[]> => {

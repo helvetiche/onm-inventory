@@ -1,0 +1,32 @@
+[
+  {
+    "itemNo": 1,
+    "particulars": "Ballpoint Pen Blue",
+    "stocks": 60,
+    "unit": "pcs"
+  },
+  {
+    "itemNo": 2,
+    "particulars": "Copy Paper A4",
+    "stocks": 25,
+    "unit": "box"
+  },
+  {
+    "itemNo": 3,
+    "particulars": "Sticky Notes 3x3",
+    "stocks": 0,
+    "unit": "pack"
+  },
+  {
+    "itemNo": 4,
+    "particulars": "Stapler Desktop",
+    "stocks": 6,
+    "unit": "pcs"
+  },
+  {
+    "itemNo": 5,
+    "particulars": "Manila Folder",
+    "stocks": 29,
+    "unit": "pcs"
+  }
+]
