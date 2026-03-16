@@ -225,7 +225,7 @@ const createInventoryDb = (): InventoryDb => {
     let query = db.collection(ITEMS_COLLECTION) as FirebaseFirestore.Query;
     
     // Apply filters in order of selectivity
-    if (year) {
+    if (year !== null) {
       query = query.where("stockYear", "==", year);
     }
     
