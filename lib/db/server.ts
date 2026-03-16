@@ -733,3 +733,13 @@ export const getMovementsForItem = async (
   return repository.getMovementsForItem(itemId);
 };
 
+export const updateItemQuarterlyData = async (
+  itemId: string,
+  quarter: number,
+  field: "requestedQuantity" | "receivedQuantity",
+  value: number
+): Promise<InventoryItem> => {
+  const repository = createInventoryRepository(createInventoryDb());
+  return repository.updateItemQuarterlyData(itemId, quarter, field, value);
+};
+

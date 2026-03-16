@@ -65,12 +65,7 @@ const createItemInputSchema = z.object({
   description: z.string().optional(),
   category: z.string().optional(),
   unit: z.string().min(1),
-  stockMonth: z.number().int().min(1).max(12),
   stockYear: z.number().int().min(2000).max(9999),
-  quarter: z.number().int().min(1).max(4).optional().default(1),
-  requestedQuantity: z.number().int().min(0),
-  receivedQuantity: z.number().int().min(0),
-  baseQuantity: z.number().int().min(0).optional().default(0),
 });
 
 export type CreateItemInput = z.infer<typeof createItemInputSchema>;
