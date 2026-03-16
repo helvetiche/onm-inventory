@@ -44,6 +44,9 @@ const itemsPaginatedSchema = z.object({
       category: z.string().optional(),
       unit: z.string(),
       stockYear: z.number().int().min(2000).max(9999),
+      stockMonth: z.number().int().min(1).max(12).optional(),
+      requestedQuantity: z.number().int().min(0).optional(),
+      receivedQuantity: z.number().int().min(0).optional(),
       q1: quarterlyDataSchema.optional(),
       q2: quarterlyDataSchema.optional(),
       q3: quarterlyDataSchema.optional(),
@@ -66,6 +69,9 @@ const createItemInputSchema = z.object({
   category: z.string().optional(),
   unit: z.string().min(1),
   stockYear: z.number().int().min(2000).max(9999),
+  stockMonth: z.number().int().min(1).max(12).optional(),
+  requestedQuantity: z.number().int().min(0).optional(),
+  receivedQuantity: z.number().int().min(0).optional(),
 });
 
 export type CreateItemInput = z.infer<typeof createItemInputSchema>;

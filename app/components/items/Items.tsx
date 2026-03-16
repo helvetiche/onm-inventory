@@ -112,8 +112,9 @@ export function Items(): JSX.Element {
   const [page, setPage] = useState(1);
   const [editingCell, setEditingCell] = useState<{itemId: string, field: 'requested' | 'received'} | null>(null);
   const [editValue, setEditValue] = useState("");
+  const [isUpdatingCell, setIsUpdatingCell] = useState(false);
 
-  const { data, isLoading, error } = useItemsQuery({
+  const { data, isLoading, error, refetch } = useItemsQuery({
     limit: PAGE_SIZE,
     page,
     search: searchParam || null,
@@ -235,10 +236,11 @@ export function Items(): JSX.Element {
   const handleStartEdit = (itemId: string, field: 'requested' | 'received', currentValue: number): void => {
     setEditingCell({ itemId, field });
     setEditValue(String(currentValue));
+    setIsUpdatingCell(false);
   };
 
   const handleSaveEdit = (): void => {
-    if (!editingCell) return;
+    if (!editingCell || isUpdatingCell) return;
     
     const newValue = parseInt(editValue);
     if (isNaN(newValue) || newValue < 0) {
@@ -250,6 +252,12 @@ export function Items(): JSX.Element {
     // Map frontend field names to API field names
     const apiFieldName: "requestedQuantity" | "receivedQuantity" = editingCell.field === 'requested' ? 'requestedQuantity' : 'receivedQuantity';
 
+    console.log("Frontend field:", editingCell.field);
+    console.log("API field name:", apiFieldName);
+    console.log("Mutation payload:", { itemId: editingCell.itemId, quarter: selectedQuarter, field: apiFieldName, value: newValue });
+
+    setIsUpdatingCell(true);
+
     // Save to database
     updateQuarterlyMutation.mutate({
       itemId: editingCell.itemId,
@@ -260,9 +268,11 @@ export function Items(): JSX.Element {
       onSuccess: () => {
         setEditingCell(null);
         setEditValue("");
+        setIsUpdatingCell(false);
       },
       onError: (error) => {
         console.error("Failed to update quarterly data:", error);
+        setIsUpdatingCell(false);
         // Keep editing mode open on error
       },
     });
@@ -271,6 +281,7 @@ export function Items(): JSX.Element {
   const handleCancelEdit = (): void => {
     setEditingCell(null);
     setEditValue("");
+    setIsUpdatingCell(false);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent): void => {
@@ -286,12 +297,68 @@ export function Items(): JSX.Element {
   };
 
   const handleBlur = (): void => {
-    // Only save on blur if we're not in the middle of a keyboard action
-    setTimeout(() => {
-      if (editingCell) {
-        handleSaveEdit();
-      }
-    }, 100);
+    // Only save on blur if we're not in the middle of a keyboard action or already updating
+    if (!isUpdatingCell) {
+      setTimeout(() => {
+        if (editingCell && !isUpdatingCell) {
+          handleSaveEdit();
+        }
+      }, 100);
+    }
+  };
+
+  const handleRollover = async (): Promise<void> => {
+    if (!data?.items) return;
+    
+    const currentQuarter = selectedQuarter;
+    const nextQuarter = currentQuarter === 4 ? 1 : currentQuarter + 1;
+    
+    try {
+      // Process rollover for all items with remaining quantities
+      const rolloverPromises = data.items
+        .filter(item => {
+          const quarterKey = `q${currentQuarter}` as 'q1' | 'q2' | 'q3' | 'q4';
+          const quarterData = item[quarterKey] || { requestedQuantity: 0, receivedQuantity: 0, baseQuantity: 0 };
+          const totalRequested = (quarterData.baseQuantity || 0) + quarterData.requestedQuantity;
+          const remaining = totalRequested - quarterData.receivedQuantity;
+          return remaining > 0;
+        })
+        .map(async item => {
+          const currentQuarterKey = `q${currentQuarter}` as 'q1' | 'q2' | 'q3' | 'q4';
+          const currentQuarterData = item[currentQuarterKey] || { requestedQuantity: 0, receivedQuantity: 0, baseQuantity: 0 };
+          const totalRequested = (currentQuarterData.baseQuantity || 0) + currentQuarterData.requestedQuantity;
+          const remaining = totalRequested - currentQuarterData.receivedQuantity;
+          
+          // Add remaining to next quarter's base quantity
+          const response = await fetch(`/api/items/${item.id}/rollover`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              fromQuarter: currentQuarter,
+              toQuarter: nextQuarter,
+              remainingQuantity: remaining,
+            }),
+          });
+          
+          if (!response.ok) {
+            throw new Error(`Failed to rollover item ${item.id}`);
+          }
+          
+          return response.json();
+        });
+      
+      await Promise.all(rolloverPromises);
+      
+      // Refresh the data
+      await refetch();
+      
+      alert(`Successfully rolled over remaining items from Q${currentQuarter} to Q${nextQuarter}`);
+    } catch (error) {
+      console.error('Rollover failed:', error);
+      alert('Failed to rollover items. Please try again.');
+    }
   };
 
   return (
@@ -317,10 +384,7 @@ export function Items(): JSX.Element {
           </button>
           <button
             type="button"
-            onClick={() => {
-              // TODO: Implement rollover logic
-              alert(`Rolling over remaining items from Q${selectedQuarter} to Q${selectedQuarter === 4 ? 1 : selectedQuarter + 1}`);
-            }}
+            onClick={handleRollover}
             className="inline-flex items-center gap-2 rounded-md border border-emerald-900 px-4 py-2.5 text-[14px] font-medium text-emerald-900 transition-colors hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:ring-offset-2"
           >
             <Archive size={18} weight="regular" aria-hidden />
@@ -629,7 +693,19 @@ export function Items(): JSX.Element {
                     // Extract quarterly data based on selected quarter
                     const quarterKey = `q${selectedQuarter}` as 'q1' | 'q2' | 'q3' | 'q4';
                     const quarterData = item[quarterKey] || { requestedQuantity: 0, receivedQuantity: 0, baseQuantity: 0 };
-                    const totalRequested = (quarterData.baseQuantity || 0) + quarterData.requestedQuantity;
+                    
+                    // Calculate total requested including previous quarter rollover
+                    let totalRequested = (quarterData.baseQuantity || 0) + (quarterData.requestedQuantity || 0);
+                    
+                    // Add previous quarter remaining if not yet rolled over
+                    if (selectedQuarter > 1) {
+                      const prevQuarterKey = `q${selectedQuarter - 1}` as 'q1' | 'q2' | 'q3' | 'q4';
+                      const prevQuarterData = item[prevQuarterKey] || { requestedQuantity: 0, receivedQuantity: 0, baseQuantity: 0 };
+                      const prevTotalRequested = (prevQuarterData.baseQuantity || 0) + prevQuarterData.requestedQuantity;
+                      const prevRemaining = Math.max(0, prevTotalRequested - prevQuarterData.receivedQuantity);
+                      totalRequested += prevRemaining;
+                    }
+                    
                     const remaining = totalRequested - quarterData.receivedQuantity;
 
                     return (
@@ -652,25 +728,58 @@ export function Items(): JSX.Element {
                         </td>
                         <td className="border-dashed border border-slate-300 px-4 py-3 text-center hover:bg-emerald-50 transition-colors group relative">
                           {editingCell?.itemId === item.id && editingCell?.field === 'requested' ? (
-                            <input
-                              type="number"
-                              value={editValue}
-                              onChange={(e) => setEditValue(e.target.value)}
-                              onKeyDown={handleKeyDown}
-                              onBlur={handleBlur}
-                              className="w-full text-center text-[14px] text-slate-600 bg-white border border-emerald-500 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-emerald-300"
-                              autoFocus
-                              min="0"
-                            />
+                            <div className="relative">
+                              <input
+                                type="number"
+                                value={editValue}
+                                onChange={(e) => setEditValue(e.target.value)}
+                                onKeyDown={handleKeyDown}
+                                onBlur={handleBlur}
+                                disabled={isUpdatingCell}
+                                className={`w-full text-center text-[14px] bg-white border border-emerald-500 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-emerald-300 ${isUpdatingCell ? 'text-transparent cursor-not-allowed' : 'text-slate-600'}`}
+                                autoFocus
+                                min="0"
+                              />
+                              {isUpdatingCell && (
+                                <div className="absolute inset-0 flex items-center justify-center rounded">
+                                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-emerald-500 border-t-transparent"></div>
+                                </div>
+                              )}
+                            </div>
                           ) : (
                             <div className="flex items-center justify-center gap-2">
                               <div className="text-[14px] text-slate-600">
-                                {totalRequested}
-                                {(quarterData.baseQuantity || 0) > 0 && (
-                                  <div className="text-[11px] text-emerald-600">
-                                    ({quarterData.baseQuantity} + {quarterData.requestedQuantity})
-                                  </div>
-                                )}
+                                {(() => {
+                                  let prevRemaining = 0;
+                                  let currentUserInput = quarterData.requestedQuantity || 0;
+                                  let currentBase = quarterData.baseQuantity || 0;
+                                  
+                                  // Calculate previous quarter remaining if we're not in Q1
+                                  if (selectedQuarter > 1) {
+                                    const prevQuarterKey = `q${selectedQuarter - 1}` as 'q1' | 'q2' | 'q3' | 'q4';
+                                    const prevQuarterData = item[prevQuarterKey] || { requestedQuantity: 0, receivedQuantity: 0, baseQuantity: 0 };
+                                    const prevTotalRequested = (prevQuarterData.baseQuantity || 0) + prevQuarterData.requestedQuantity;
+                                    prevRemaining = Math.max(0, prevTotalRequested - prevQuarterData.receivedQuantity);
+                                  }
+                                  
+                                  const finalTotal = currentBase + prevRemaining + currentUserInput;
+                                  
+                                  return (
+                                    <>
+                                      {finalTotal}
+                                      {(prevRemaining > 0 || currentUserInput > 0) && (
+                                        <div className="text-[11px] text-emerald-600">
+                                          {prevRemaining > 0 && (
+                                            <div>Q{selectedQuarter - 1}: {prevRemaining}</div>
+                                          )}
+                                          {currentUserInput > 0 && (
+                                            <div>Q{selectedQuarter}: {currentUserInput}</div>
+                                          )}
+                                        </div>
+                                      )}
+                                    </>
+                                  );
+                                })()}
                               </div>
                               <button
                                 type="button"
@@ -685,16 +794,24 @@ export function Items(): JSX.Element {
                         </td>
                         <td className="border-dashed border border-slate-300 px-4 py-3 text-center hover:bg-emerald-50 transition-colors group relative">
                           {editingCell?.itemId === item.id && editingCell?.field === 'received' ? (
-                            <input
-                              type="number"
-                              value={editValue}
-                              onChange={(e) => setEditValue(e.target.value)}
-                              onKeyDown={handleKeyDown}
-                              onBlur={handleBlur}
-                              className="w-full text-center text-[14px] text-slate-600 bg-white border border-emerald-500 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-emerald-300"
-                              autoFocus
-                              min="0"
-                            />
+                            <div className="relative">
+                              <input
+                                type="number"
+                                value={editValue}
+                                onChange={(e) => setEditValue(e.target.value)}
+                                onKeyDown={handleKeyDown}
+                                onBlur={handleBlur}
+                                disabled={isUpdatingCell}
+                                className={`w-full text-center text-[14px] bg-white border border-emerald-500 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-emerald-300 ${isUpdatingCell ? 'text-transparent cursor-not-allowed' : 'text-slate-600'}`}
+                                autoFocus
+                                min="0"
+                              />
+                              {isUpdatingCell && (
+                                <div className="absolute inset-0 flex items-center justify-center rounded">
+                                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-emerald-500 border-t-transparent"></div>
+                                </div>
+                              )}
+                            </div>
                           ) : (
                             <div className="flex items-center justify-center gap-2">
                               <div className="text-[14px] text-slate-600">

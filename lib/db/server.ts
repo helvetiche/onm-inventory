@@ -184,7 +184,7 @@ export interface InventoryRepository {
   createItem(input: CreateItemInput): Promise<InventoryItem>;
   updateItem(id: string, input: z.infer<typeof updateItemInputSchema>): Promise<InventoryItem>;
   toggleItemActive(id: string): Promise<InventoryItem>;
-  updateItemQuarterlyData(id: string, quarter: number, field: "requestedQuantity" | "receivedQuantity", value: number): Promise<InventoryItem>;
+  updateItemQuarterlyData(id: string, quarter: number, field: "requestedQuantity" | "receivedQuantity" | "baseQuantity", value: number): Promise<InventoryItem>;
   getInventoryLevelsForItem(itemId: string): Promise<InventoryLevel[]>;
   createMovement(input: CreateMovementInput): Promise<InventoryMovement>;
   getMovementsForItem(itemId: string): Promise<InventoryMovement[]>;
@@ -225,7 +225,7 @@ const createInventoryDb = (): InventoryDb => {
     let query = db.collection(ITEMS_COLLECTION) as FirebaseFirestore.Query;
     
     // Apply filters in order of selectivity
-    if (year !== null) {
+    if (year !== null && year !== undefined) {
       query = query.where("stockYear", "==", year);
     }
     
@@ -251,7 +251,7 @@ const createInventoryDb = (): InventoryDb => {
     const searchTrimmed = search?.trim() || null;
     const categoryTrimmed = category?.trim() || null;
 
-    const query = buildItemsQuery(searchTrimmed, categoryTrimmed, year);
+    const query = buildItemsQuery(searchTrimmed, categoryTrimmed, year ?? null);
     let paginatedQuery = query;
     if (cursor) {
       try {
@@ -595,7 +595,7 @@ export const createInventoryRepository = (
   const updateItemQuarterlyData = async (
     id: string,
     quarter: number,
-    field: "requestedQuantity" | "receivedQuantity",
+    field: "requestedQuantity" | "receivedQuantity" | "baseQuantity",
     value: number
   ): Promise<InventoryItem> => {
     const existing = await getItemById(id);
@@ -736,10 +736,12 @@ export const getMovementsForItem = async (
 export const updateItemQuarterlyData = async (
   itemId: string,
   quarter: number,
-  field: "requestedQuantity" | "receivedQuantity",
+  field: "requestedQuantity" | "receivedQuantity" | "baseQuantity",
   value: number
 ): Promise<InventoryItem> => {
   const repository = createInventoryRepository(createInventoryDb());
   return repository.updateItemQuarterlyData(itemId, quarter, field, value);
 };
+
+export { createInventoryDb };
 

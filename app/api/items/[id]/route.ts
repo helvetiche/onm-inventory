@@ -63,9 +63,9 @@ export async function PATCH(
   }
 
   const nextRequested =
-    parsed.data.requestedQuantity ?? item.requestedQuantity;
+    parsed.data.requestedQuantity ?? item.requestedQuantity ?? 0;
   const nextReceived =
-    parsed.data.receivedQuantity ?? item.receivedQuantity;
+    parsed.data.receivedQuantity ?? item.receivedQuantity ?? 0;
   if (nextReceived > nextRequested) {
     return NextResponse.json(
       {

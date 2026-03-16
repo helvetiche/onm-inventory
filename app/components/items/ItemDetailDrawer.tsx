@@ -165,7 +165,7 @@ export function ItemDetailDrawer({
                   <div>
                     <dt className="text-slate-500">Remaining</dt>
                     <dd className="font-medium text-emerald-900">
-                      {data.item.requestedQuantity - data.item.receivedQuantity}
+                      {(data.item.requestedQuantity ?? 0) - (data.item.receivedQuantity ?? 0)}
                     </dd>
                   </div>
                   <div>
