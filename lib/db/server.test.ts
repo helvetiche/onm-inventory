@@ -57,9 +57,10 @@ describe("inventory repository", () => {
     const input: CreateItemInput = {
       sku: "SKU-123",
       name: "Test Item",
-      unit: "pcs",
+      unit: "pieces",
       description: "Demo",
       category: "Test",
+      stockAmount: 100,
       stockMonth: 3,
       stockYear: 2026,
       requestedQuantity: 100,

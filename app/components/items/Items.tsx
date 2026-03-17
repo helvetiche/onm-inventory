@@ -723,7 +723,7 @@ export function Items(): JSX.Element {
                         </td>
                         <td className="border-dashed border border-slate-300 px-4 py-3 text-center hover:bg-emerald-50 transition-colors">
                           <div className="text-[14px] font-medium text-emerald-900">
-                            {remaining} {item.unit}
+                            {item.stockAmount} {item.unit}
                           </div>
                         </td>
                         <td className="border-dashed border border-slate-300 px-4 py-3 text-center hover:bg-emerald-50 transition-colors group relative">
@@ -830,7 +830,7 @@ export function Items(): JSX.Element {
                         </td>
                         <td className="border-dashed border border-slate-300 px-4 py-3 text-center hover:bg-emerald-50 transition-colors">
                           <div className="text-[14px] text-emerald-900">
-                            {remaining}
+                            {totalRequested > 0 && quarterData.receivedQuantity >= 0 ? remaining : "—"}
                           </div>
                         </td>
                       </tr>

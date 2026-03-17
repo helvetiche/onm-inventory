@@ -15,7 +15,9 @@ import {
   MagnifyingGlass,
   SquaresFour,
   List,
+  SignOut,
 } from "@phosphor-icons/react";
+import { useSignOut, useAuth } from "@/lib/hooks/use-auth";
 
 const INVENTORY_TABS = [
   {
@@ -109,6 +111,8 @@ export function Sidebar({
   const searchParams = useSearchParams();
   const activeTab = getActiveTab(searchParams);
   const [searchQuery, setSearchQuery] = useState("");
+  const { user } = useAuth();
+  const { signOut, isLoading: isSigningOut } = useSignOut();
 
   const filteredInventoryTabs = useMemo(
     () => INVENTORY_TABS.filter((tab) => matchesSearch(searchQuery, tab)),
@@ -397,6 +401,57 @@ export function Sidebar({
           </>
         )}
       </nav>
+
+      {/* User Info & Logout */}
+      <div className="shrink-0 border-t border-slate-100 p-3">
+        {isIconOnly ? (
+          <button
+            onClick={() => signOut()}
+            disabled={isSigningOut}
+            className="w-full flex items-center justify-center p-2 rounded-md text-slate-600 hover:bg-red-50 hover:text-red-600 transition-colors disabled:opacity-50"
+            title="Sign Out"
+          >
+            {isSigningOut ? (
+              <div className="animate-spin rounded-full h-4 w-4 border-2 border-red-600 border-t-transparent"></div>
+            ) : (
+              <SignOut size={18} weight="regular" />
+            )}
+          </button>
+        ) : (
+          <div className="space-y-3">
+            <div className="flex items-center gap-3 px-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-600 text-white text-sm font-medium">
+                {user?.email?.charAt(0).toUpperCase() || "U"}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-slate-900 truncate">
+                  {user?.displayName || "User"}
+                </p>
+                <p className="text-xs text-slate-500 truncate">
+                  {user?.email}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => signOut()}
+              disabled={isSigningOut}
+              className="w-full flex items-center gap-2 px-2 py-2 rounded-md text-slate-600 hover:bg-red-50 hover:text-red-600 transition-colors disabled:opacity-50"
+            >
+              {isSigningOut ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-red-600 border-t-transparent"></div>
+                  <span className="text-sm">Signing out...</span>
+                </>
+              ) : (
+                <>
+                  <SignOut size={16} weight="regular" />
+                  <span className="text-sm">Sign Out</span>
+                </>
+              )}
+            </button>
+          </div>
+        )}
+      </div>
     </aside>
   );
 }

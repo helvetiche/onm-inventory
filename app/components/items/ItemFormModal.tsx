@@ -1,8 +1,8 @@
 "use client";
 
 import type { JSX } from "react";
-import { useEffect } from "react";
-import { X } from "@phosphor-icons/react";
+import { useEffect, useState } from "react";
+import { X, Package, Files, Stack } from "@phosphor-icons/react";
 import type { CreateItemInput } from "@/lib/hooks/use-items";
 import type { UpdateItemInput } from "@/lib/hooks/use-item";
 
@@ -19,16 +19,16 @@ type ItemFormModalProps = {
 const DEFAULT_VALUES: CreateItemInput = {
   sku: "",
   name: "",
-  description: "",
-  category: "",
-  unit: "pcs",
-  stockMonth: new Date().getMonth() + 1,
+  unit: "pieces",
+  stockAmount: 0,
   stockYear: new Date().getFullYear(),
-  requestedQuantity: 0,
-  receivedQuantity: 0,
 };
 
-const UNITS = ["pcs", "kg", "g", "L", "mL", "m", "box", "pack", "unit"];
+const UNITS: Array<{ value: "box" | "pieces" | "ream"; label: string; icon: JSX.Element }> = [
+  { value: "box", label: "Box(es)", icon: <Package size={18} weight="regular" /> },
+  { value: "pieces", label: "Pieces", icon: <Stack size={18} weight="regular" /> },
+  { value: "ream", label: "Ream(s)", icon: <Files size={18} weight="regular" /> },
+];
 
 export function ItemFormModal({
   isOpen,
@@ -39,39 +39,27 @@ export function ItemFormModal({
   isSubmitting,
   error,
 }: ItemFormModalProps): JSX.Element | null {
+  const [selectedUnit, setSelectedUnit] = useState<"box" | "pieces" | "ream">(initialValues?.unit || "pieces");
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
     e.preventDefault();
     const form = e.currentTarget;
     const formData = new FormData(form);
     const values: CreateItemInput = {
-      sku: (formData.get("sku") as string)?.trim() ?? "",
+      sku: `ITEM-${Date.now()}`, // Auto-generate SKU
       name: (formData.get("name") as string)?.trim() ?? "",
-      description: (formData.get("description") as string)?.trim() || undefined,
-      category: (formData.get("category") as string)?.trim() || undefined,
-      unit: (formData.get("unit") as string) || "pcs",
-      stockMonth: Number(formData.get("stockMonth")),
-      stockYear: Number(formData.get("stockYear")),
-      requestedQuantity: Number(formData.get("requestedQuantity") ?? 0),
-      receivedQuantity: Number(formData.get("receivedQuantity") ?? 0),
+      unit: selectedUnit,
+      stockAmount: Number(formData.get("stockAmount")),
+      stockYear: new Date().getFullYear(), // Auto-set to current year
     };
 
     if (mode === "create") {
       onSubmit(values);
     } else {
       const updates: UpdateItemInput = {};
-      if (values.sku) updates.sku = values.sku;
       if (values.name) updates.name = values.name;
-      if (values.description !== undefined) updates.description = values.description;
-      if (values.category !== undefined) updates.category = values.category;
       if (values.unit) updates.unit = values.unit;
-      if (values.stockMonth !== undefined) updates.stockMonth = values.stockMonth;
-      if (values.stockYear !== undefined) updates.stockYear = values.stockYear;
-      if (values.requestedQuantity !== undefined) {
-        updates.requestedQuantity = values.requestedQuantity;
-      }
-      if (values.receivedQuantity !== undefined) {
-        updates.receivedQuantity = values.receivedQuantity;
-      }
+      if (values.stockAmount !== undefined) updates.stockAmount = values.stockAmount;
       onSubmit(updates);
     }
   };
@@ -97,61 +85,48 @@ export function ItemFormModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
       aria-modal
       aria-labelledby="item-form-title"
       role="dialog"
       onKeyDown={handleKeyDown}
     >
       <div
-        className="relative w-full max-w-md rounded-lg border border-slate-100 bg-white shadow-xl"
+        className="relative w-full max-w-lg rounded-2xl bg-white shadow-2xl border border-slate-200/50"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
-          <h2
-            id="item-form-title"
-            className="text-base font-medium text-emerald-900"
-          >
-            {mode === "create" ? "Add item" : "Edit item"}
-          </h2>
+        {/* Header */}
+        <div className="flex items-center justify-between px-8 py-6 border-b border-slate-100">
+          <div>
+            <h2
+              id="item-form-title"
+              className="text-xl font-semibold text-slate-900"
+            >
+              {mode === "create" ? "Add New Item" : "Edit Item"}
+            </h2>
+            <p className="text-sm text-slate-500 mt-1">
+              {mode === "create" ? "Create a new inventory item" : "Update item details"}
+            </p>
+          </div>
           <button
             type="button"
             onClick={onClose}
-            className="flex h-9 w-9 items-center justify-center rounded-md text-slate-500 transition-colors hover:bg-slate-100 hover:text-emerald-900 focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:ring-offset-2"
+            className="flex h-10 w-10 items-center justify-center rounded-full text-slate-400 transition-all hover:bg-slate-100 hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
             aria-label="Close"
           >
             <X size={20} weight="regular" aria-hidden />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6">
-          <div className="space-y-4">
-            <div>
-              <label
-                htmlFor="item-sku"
-                className="mb-1.5 block text-[13px] font-normal text-emerald-900"
-              >
-                SKU
-              </label>
-              <input
-                id="item-sku"
-                name="sku"
-                type="text"
-                required
-                defaultValue={values.sku}
-                placeholder="e.g. SKU-001"
-                className="w-full rounded-md border border-slate-200 bg-white px-3 py-2.5 text-[14px] text-emerald-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                disabled={isSubmitting}
-                autoComplete="off"
-              />
-            </div>
-
-            <div>
+        <form onSubmit={handleSubmit} className="px-8 py-6">
+          <div className="space-y-6">
+            {/* Name Field */}
+            <div className="space-y-2">
               <label
                 htmlFor="item-name"
-                className="mb-1.5 block text-[13px] font-normal text-emerald-900"
+                className="block text-sm font-medium text-slate-700"
               >
-                Name
+                Item Name
               </label>
               <input
                 id="item-name"
@@ -159,182 +134,93 @@ export function ItemFormModal({
                 type="text"
                 required
                 defaultValue={values.name}
-                placeholder="Item name"
-                className="w-full rounded-md border border-slate-200 bg-white px-3 py-2.5 text-[14px] text-emerald-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                placeholder="Enter item name..."
+                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-4 focus:ring-emerald-500/10 transition-all"
                 disabled={isSubmitting}
                 autoComplete="off"
               />
             </div>
 
-            <div>
+            {/* Stock Amount Field */}
+            <div className="space-y-2">
               <label
-                htmlFor="item-description"
-                className="mb-1.5 block text-[13px] font-normal text-emerald-900"
+                htmlFor="item-stock-amount"
+                className="block text-sm font-medium text-slate-700"
               >
-                Description
-              </label>
-              <textarea
-                id="item-description"
-                name="description"
-                rows={2}
-                defaultValue={values.description}
-                placeholder="Optional description"
-                className="w-full rounded-md border border-slate-200 bg-white px-3 py-2.5 text-[14px] text-emerald-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                disabled={isSubmitting}
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="item-category"
-                className="mb-1.5 block text-[13px] font-normal text-emerald-900"
-              >
-                Category
+                Stock Amount
               </label>
               <input
-                id="item-category"
-                name="category"
-                type="text"
-                defaultValue={values.category}
-                placeholder="e.g. Electronics"
-                className="w-full rounded-md border border-slate-200 bg-white px-3 py-2.5 text-[14px] text-emerald-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                id="item-stock-amount"
+                name="stockAmount"
+                type="number"
+                min={0}
+                required
+                defaultValue={values.stockAmount}
+                placeholder="Enter stock amount..."
+                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-4 focus:ring-emerald-500/10 transition-all"
                 disabled={isSubmitting}
-                autoComplete="off"
               />
             </div>
 
-            <div>
-              <label
-                htmlFor="item-unit"
-                className="mb-1.5 block text-[13px] font-normal text-emerald-900"
-              >
-                Unit
+            {/* Unit Selection */}
+            <div className="space-y-3">
+              <label className="block text-sm font-medium text-slate-700">
+                Unit of Measurement
               </label>
-              <select
-                id="item-unit"
-                name="unit"
-                required
-                defaultValue={values.unit}
-                className="w-full rounded-md border border-slate-200 bg-white px-3 py-2.5 text-[14px] text-emerald-900 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                disabled={isSubmitting}
-              >
-                {UNITS.map((u) => (
-                  <option key={u} value={u}>
-                    {u}
-                  </option>
+              <div className="flex gap-3">
+                {UNITS.map((unit) => (
+                  <button
+                    key={unit.value}
+                    type="button"
+                    onClick={() => setSelectedUnit(unit.value)}
+                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 transition-all ${
+                      selectedUnit === unit.value
+                        ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                        : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                    }`}
+                    disabled={isSubmitting}
+                  >
+                    <span className="flex-shrink-0">{unit.icon}</span>
+                    <span className="text-sm font-medium">{unit.label}</span>
+                  </button>
                 ))}
-              </select>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label
-                  htmlFor="item-stock-month"
-                  className="mb-1.5 block text-[13px] font-normal text-emerald-900"
-                >
-                  Stock Month
-                </label>
-                <input
-                  id="item-stock-month"
-                  name="stockMonth"
-                  type="number"
-                  min={1}
-                  max={12}
-                  required
-                  defaultValue={values.stockMonth}
-                  className="w-full rounded-md border border-slate-200 bg-white px-3 py-2.5 text-[14px] text-emerald-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                  disabled={isSubmitting}
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="item-stock-year"
-                  className="mb-1.5 block text-[13px] font-normal text-emerald-900"
-                >
-                  Stock Year
-                </label>
-                <input
-                  id="item-stock-year"
-                  name="stockYear"
-                  type="number"
-                  min={2000}
-                  max={9999}
-                  required
-                  defaultValue={values.stockYear}
-                  className="w-full rounded-md border border-slate-200 bg-white px-3 py-2.5 text-[14px] text-emerald-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                  disabled={isSubmitting}
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label
-                  htmlFor="item-requested-quantity"
-                  className="mb-1.5 block text-[13px] font-normal text-emerald-900"
-                >
-                  Requested
-                </label>
-                <input
-                  id="item-requested-quantity"
-                  name="requestedQuantity"
-                  type="number"
-                  min={0}
-                  required
-                  defaultValue={values.requestedQuantity}
-                  className="w-full rounded-md border border-slate-200 bg-white px-3 py-2.5 text-[14px] text-emerald-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                  disabled={isSubmitting}
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="item-received-quantity"
-                  className="mb-1.5 block text-[13px] font-normal text-emerald-900"
-                >
-                  Received
-                </label>
-                <input
-                  id="item-received-quantity"
-                  name="receivedQuantity"
-                  type="number"
-                  min={0}
-                  required
-                  defaultValue={values.receivedQuantity}
-                  className="w-full rounded-md border border-slate-200 bg-white px-3 py-2.5 text-[14px] text-emerald-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                  disabled={isSubmitting}
-                />
               </div>
             </div>
           </div>
 
           {error && (
-            <p
-              className="mt-4 text-[13px] text-red-600"
-              role="alert"
-            >
-              {error}
-            </p>
+            <div className="mt-6 p-4 rounded-xl bg-red-50 border border-red-200">
+              <p className="text-sm text-red-600" role="alert">
+                {error}
+              </p>
+            </div>
           )}
 
-          <div className="mt-6 flex justify-end gap-3">
+          {/* Footer */}
+          <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-slate-100">
             <button
               type="button"
               onClick={onClose}
-              className="rounded-md border border-slate-200 px-4 py-2 text-[14px] font-normal text-emerald-900 transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:ring-offset-2"
+              className="px-6 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-medium transition-all hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-300 focus:ring-offset-2"
               disabled={isSubmitting}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="rounded-md bg-emerald-900 px-4 py-2 text-[14px] font-medium text-white transition-colors hover:bg-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:ring-offset-2 disabled:opacity-60"
+              className="px-6 py-2.5 rounded-xl bg-emerald-600 text-white font-medium transition-all hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed shadow-lg shadow-emerald-600/25"
               disabled={isSubmitting}
             >
               {isSubmitting
-                ? "Saving..."
+                ? (
+                  <div className="flex items-center gap-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                    <span>Saving...</span>
+                  </div>
+                )
                 : mode === "create"
-                  ? "Create"
-                  : "Save"}
+                  ? "Create Item"
+                  : "Save Changes"}
             </button>
           </div>
         </form>
