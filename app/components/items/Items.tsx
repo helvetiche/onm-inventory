@@ -836,6 +836,29 @@ export function Items(): JSX.Element {
                       </tr>
                     );
                   })}
+                  {/* Fill empty rows to make 8 total */}
+                  {Array.from({ length: Math.max(0, PAGE_SIZE - items.length) }, (_, i) => (
+                    <tr key={`empty-${i}`} className="even:bg-slate-50/30">
+                      <td className="border-dashed border border-slate-300 px-4 py-4 text-center hover:bg-emerald-50 transition-colors">
+                        <div className="text-[14px] text-slate-400"></div>
+                      </td>
+                      <td className="border-dashed border border-slate-300 px-4 py-4 hover:bg-emerald-50 transition-colors">
+                        <div className="text-[14px] text-slate-400"></div>
+                      </td>
+                      <td className="border-dashed border border-slate-300 px-4 py-4 text-center hover:bg-emerald-50 transition-colors">
+                        <div className="text-[14px] text-slate-400"></div>
+                      </td>
+                      <td className="border-dashed border border-slate-300 px-4 py-4 text-center hover:bg-emerald-50 transition-colors">
+                        <div className="text-[14px] text-slate-400"></div>
+                      </td>
+                      <td className="border-dashed border border-slate-300 px-4 py-4 text-center hover:bg-emerald-50 transition-colors">
+                        <div className="text-[14px] text-slate-400"></div>
+                      </td>
+                      <td className="border-dashed border border-slate-300 px-4 py-4 text-center hover:bg-emerald-50 transition-colors">
+                        <div className="text-[14px] text-slate-400"></div>
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
