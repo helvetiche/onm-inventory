@@ -6,7 +6,6 @@ import {
   MagnifyingGlass,
   Plus,
   PencilSimple,
-  Archive,
   Package,
   CaretLeft,
   CaretRight,
@@ -250,62 +249,6 @@ export function Items(): JSX.Element {
           handleSaveEdit();
         }
       }, 100);
-    }
-  };
-
-  const handleRollover = async (): Promise<void> => {
-    if (!data?.items) return;
-    
-    const currentQuarter = selectedQuarter;
-    const nextQuarter = currentQuarter === 4 ? 1 : currentQuarter + 1;
-    
-    try {
-      // Process rollover for all items with non-zero remaining quantities (positive or negative)
-      const rolloverPromises = data.items
-        .filter(item => {
-          const quarterKey = `q${currentQuarter}` as 'q1' | 'q2' | 'q3' | 'q4';
-          const quarterData = item[quarterKey] || { requestedQuantity: 0, receivedQuantity: 0, baseQuantity: 0 };
-          const totalRequested = (quarterData.baseQuantity || 0) + quarterData.requestedQuantity;
-          const remaining = totalRequested - quarterData.receivedQuantity;
-          return remaining !== 0; // Include both positive (shortage) and negative (surplus)
-        })
-        .map(async item => {
-          const currentQuarterKey = `q${currentQuarter}` as 'q1' | 'q2' | 'q3' | 'q4';
-          const currentQuarterData = item[currentQuarterKey] || { requestedQuantity: 0, receivedQuantity: 0, baseQuantity: 0 };
-          const totalRequested = (currentQuarterData.baseQuantity || 0) + currentQuarterData.requestedQuantity;
-          const remaining = totalRequested - currentQuarterData.receivedQuantity;
-          
-          // Rollover to next quarter
-          // If positive: adds to next quarter's requested (baseQuantity)
-          // If negative: adds absolute value to next quarter's received
-          const response = await fetch(`/api/items/${item.id}/rollover`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              fromQuarter: currentQuarter,
-              toQuarter: nextQuarter,
-              remainingQuantity: remaining,
-            }),
-          });
-          
-          if (!response.ok) {
-            throw new Error(`Failed to rollover item ${item.id}`);
-          }
-          
-          return response.json();
-        });
-      
-      await Promise.all(rolloverPromises);
-      
-      // Refresh the data
-      await refetch();
-      
-      alert(`Successfully rolled over items from Q${currentQuarter} to Q${nextQuarter}`);
-    } catch (error) {
-      console.error('Rollover failed:', error);
-      alert('Failed to rollover items. Please try again.');
     }
   };
 
