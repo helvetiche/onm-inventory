@@ -239,7 +239,7 @@ const createInventoryDb = (): InventoryDb => {
         .where("name", "<=", searchTrimmed + "\uf8ff");
     }
     
-    return query.orderBy("name", "asc").orderBy(FieldPath.documentId(), "asc");
+    return query.orderBy("sku", "asc").orderBy(FieldPath.documentId(), "asc");
   };
 
   const getItemsPaginated = async (

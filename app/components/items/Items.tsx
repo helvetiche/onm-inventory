@@ -5,16 +5,15 @@ import { useState, useEffect, useCallback } from "react";
 import {
   MagnifyingGlass,
   Plus,
-  DotsThree,
-  Eye,
   PencilSimple,
   Archive,
   Package,
   CaretLeft,
   CaretRight,
-  Cube,
-  Stack,
+  DownloadSimple,
   Tag,
+  Stack,
+  Cube,
 } from "@phosphor-icons/react";
 import {
   useItemsQuery,
@@ -31,8 +30,10 @@ import {
 } from "@/lib/hooks/use-item";
 import { ItemFormModal } from "./ItemFormModal";
 import { ItemDetailDrawer } from "./ItemDetailDrawer";
+import { exportInventoryToExcel } from "@/lib/utils/excel-export";
 
-const PAGE_SIZE = 8;
+const PAGE_SIZE = 16;
+
 const SEARCH_DEBOUNCE_MS = 300;
 const MONTH_LABELS = [
   "Jan",
@@ -48,60 +49,6 @@ const MONTH_LABELS = [
   "Nov",
   "Dec",
 ] as const;
-
-type StatCardBadge = {
-  icon: React.ReactNode;
-  label?: string;
-};
-
-type StatCardProps = {
-  icon: React.ReactNode;
-  title: string;
-  count: number | string;
-  badges: [StatCardBadge, StatCardBadge, StatCardBadge];
-  description: string;
-};
-
-function StatCard({
-  icon,
-  title,
-  count,
-  badges,
-  description,
-}: StatCardProps): JSX.Element {
-  const descWords = description.split(/\s+/).slice(0, 20).join(" ");
-  return (
-    <div className="rounded-lg border border-slate-100 bg-white p-5 shadow-[0_1px_3px_0_rgba(0,0,0,0.05)]">
-      <div className="mb-3 flex items-center gap-2">
-        <span className="flex h-9 w-9 items-center justify-center rounded-md bg-emerald-900/10 text-emerald-900">
-          {icon}
-        </span>
-        <span className="text-[14px] font-medium text-emerald-900">{title}</span>
-      </div>
-      <p className="mb-3 text-2xl font-medium tracking-tight text-emerald-900">
-        {count}
-      </p>
-      <div className="mb-3 flex flex-wrap gap-2">
-        {badges.map((badge, i) => (
-          <div
-            key={i}
-            className="flex items-center gap-1.5 rounded-md border border-slate-100 bg-slate-50/80 px-2.5 py-2"
-          >
-            <span className="flex h-6 w-6 items-center justify-center text-emerald-900/80">
-              {badge.icon}
-            </span>
-            {badge.label && (
-              <span className="max-w-[80px] truncate text-[12px] text-slate-600">
-                {badge.label}
-              </span>
-            )}
-          </div>
-        ))}
-      </div>
-      <p className="text-[13px] leading-relaxed text-slate-500">{descWords}</p>
-    </div>
-  );
-}
 
 export function Items(): JSX.Element {
   const [searchInput, setSearchInput] = useState("");
@@ -140,11 +87,11 @@ export function Items(): JSX.Element {
   const totalPages = data?.totalPages ?? 1;
   const totalCount = data?.totalCount ?? 0;
   const currentPage = data?.page ?? 1;
-  const activeCount = items.filter((i) => i.isActive).length;
 
   useEffect(() => {
     const t = setTimeout(() => {
       setSearchParam(searchInput.trim());
+      setPage(1); // Reset to page 1 when search changes
     }, SEARCH_DEBOUNCE_MS);
     return () => clearTimeout(t);
   }, [searchInput]);
@@ -185,7 +132,6 @@ export function Items(): JSX.Element {
 
   const handleSearchChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>): void => {
-      setPage(1);
       setSearchInput(e.target.value);
     },
     []
@@ -314,14 +260,14 @@ export function Items(): JSX.Element {
     const nextQuarter = currentQuarter === 4 ? 1 : currentQuarter + 1;
     
     try {
-      // Process rollover for all items with remaining quantities
+      // Process rollover for all items with non-zero remaining quantities (positive or negative)
       const rolloverPromises = data.items
         .filter(item => {
           const quarterKey = `q${currentQuarter}` as 'q1' | 'q2' | 'q3' | 'q4';
           const quarterData = item[quarterKey] || { requestedQuantity: 0, receivedQuantity: 0, baseQuantity: 0 };
           const totalRequested = (quarterData.baseQuantity || 0) + quarterData.requestedQuantity;
           const remaining = totalRequested - quarterData.receivedQuantity;
-          return remaining > 0;
+          return remaining !== 0; // Include both positive (shortage) and negative (surplus)
         })
         .map(async item => {
           const currentQuarterKey = `q${currentQuarter}` as 'q1' | 'q2' | 'q3' | 'q4';
@@ -329,7 +275,9 @@ export function Items(): JSX.Element {
           const totalRequested = (currentQuarterData.baseQuantity || 0) + currentQuarterData.requestedQuantity;
           const remaining = totalRequested - currentQuarterData.receivedQuantity;
           
-          // Add remaining to next quarter's base quantity
+          // Rollover to next quarter
+          // If positive: adds to next quarter's requested (baseQuantity)
+          // If negative: adds absolute value to next quarter's received
           const response = await fetch(`/api/items/${item.id}/rollover`, {
             method: 'POST',
             headers: {
@@ -354,25 +302,38 @@ export function Items(): JSX.Element {
       // Refresh the data
       await refetch();
       
-      alert(`Successfully rolled over remaining items from Q${currentQuarter} to Q${nextQuarter}`);
+      alert(`Successfully rolled over items from Q${currentQuarter} to Q${nextQuarter}`);
     } catch (error) {
       console.error('Rollover failed:', error);
       alert('Failed to rollover items. Please try again.');
     }
   };
 
+  const handleExportExcel = async (): Promise<void> => {
+    try {
+      // Fetch all items for the selected year (not just current page)
+      const response = await fetch(`/api/items?year=${selectedYear}&limit=100`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch items for export');
+      }
+      
+      const exportData = await response.json();
+      
+      await exportInventoryToExcel({
+        items: exportData.items,
+        quarter: selectedQuarter,
+        year: selectedYear,
+        month: MONTH_LABELS[new Date().getMonth()].toUpperCase(),
+      });
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert('Failed to export to Excel. Please try again.');
+    }
+  };
+
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-4">
-          <h1 className="text-lg font-medium tracking-tight text-emerald-900">
-            Items - Q{selectedQuarter} {selectedYear}
-          </h1>
-          <span className="rounded-full bg-emerald-50 px-3 py-1 text-[13px] font-normal text-emerald-800">
-            {totalCount} total
-            {activeCount > 0 ? ` · ${activeCount} active` : ""}
-          </span>
-        </div>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-end">
         <div className="flex gap-2">
           <button
             type="button"
@@ -384,54 +345,13 @@ export function Items(): JSX.Element {
           </button>
           <button
             type="button"
-            onClick={handleRollover}
+            onClick={handleExportExcel}
             className="inline-flex items-center gap-2 rounded-md border border-emerald-900 px-4 py-2.5 text-[14px] font-medium text-emerald-900 transition-colors hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:ring-offset-2"
           >
-            <Archive size={18} weight="regular" aria-hidden />
-            Rollover to Next Quarter
+            <DownloadSimple size={18} weight="regular" aria-hidden />
+            Export Excel
           </button>
         </div>
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <StatCard
-          icon={<Package size={18} weight="regular" aria-hidden />}
-          title="Total Items"
-          count={isLoading ? "—" : totalCount}
-          badges={[
-            { icon: <Package size={14} weight="regular" aria-hidden /> },
-            { icon: <Cube size={14} weight="regular" aria-hidden /> },
-            { icon: <Stack size={14} weight="regular" aria-hidden /> },
-          ]}
-          description="The total count of inventory items in your product catalog across all categories and filters you have added so far."
-        />
-        <StatCard
-          icon={<Archive size={18} weight="regular" aria-hidden />}
-          title="Categories"
-          count={categories.length}
-          badges={[
-            ...categories.slice(0, 3).map((c) => ({
-              icon: <Tag size={14} weight="regular" aria-hidden />,
-              label: c,
-            })),
-            ...Array.from({ length: Math.max(0, 3 - categories.length) }, () => ({
-              icon: <Tag size={14} weight="regular" aria-hidden />,
-              label: undefined,
-            })),
-          ].slice(0, 3) as [StatCardBadge, StatCardBadge, StatCardBadge]}
-          description="The number of unique product categories that you use to organize and group your inventory items together in the system."
-        />
-        <StatCard
-          icon={<MagnifyingGlass size={18} weight="regular" aria-hidden />}
-          title="On This Page"
-          count={items.length}
-          badges={[
-            { icon: <Eye size={14} weight="regular" aria-hidden /> },
-            { icon: <PencilSimple size={14} weight="regular" aria-hidden /> },
-            { icon: <DotsThree size={14} weight="regular" aria-hidden /> },
-          ]}
-          description="The number of items that are currently displayed on this page of results based on your pagination and filter settings."
-        />
       </div>
 
       <div className="flex flex-col gap-4 sm:flex-row">
@@ -694,19 +614,21 @@ export function Items(): JSX.Element {
                     const quarterKey = `q${selectedQuarter}` as 'q1' | 'q2' | 'q3' | 'q4';
                     const quarterData = item[quarterKey] || { requestedQuantity: 0, receivedQuantity: 0, baseQuantity: 0 };
                     
-                    // Calculate total requested including previous quarter rollover
-                    let totalRequested = (quarterData.baseQuantity || 0) + (quarterData.requestedQuantity || 0);
-                    
-                    // Add previous quarter remaining if not yet rolled over
+                    // Calculate previous quarter's remaining (can be positive or negative)
+                    let prevRemaining = 0;
                     if (selectedQuarter > 1) {
                       const prevQuarterKey = `q${selectedQuarter - 1}` as 'q1' | 'q2' | 'q3' | 'q4';
                       const prevQuarterData = item[prevQuarterKey] || { requestedQuantity: 0, receivedQuantity: 0, baseQuantity: 0 };
                       const prevTotalRequested = (prevQuarterData.baseQuantity || 0) + prevQuarterData.requestedQuantity;
-                      const prevRemaining = Math.max(0, prevTotalRequested - prevQuarterData.receivedQuantity);
-                      totalRequested += prevRemaining;
+                      prevRemaining = prevTotalRequested - prevQuarterData.receivedQuantity;
                     }
                     
-                    const remaining = totalRequested - quarterData.receivedQuantity;
+                    // Calculate total requested and received with rollover logic
+                    // If prevRemaining > 0 (shortage): add to requested
+                    // If prevRemaining < 0 (surplus): add absolute value to received
+                    const totalRequested = (quarterData.baseQuantity || 0) + quarterData.requestedQuantity + (prevRemaining > 0 ? prevRemaining : 0);
+                    const totalReceived = quarterData.receivedQuantity + (prevRemaining < 0 ? Math.abs(prevRemaining) : 0);
+                    const remaining = totalRequested - totalReceived;
 
                     return (
                       <tr
@@ -714,7 +636,7 @@ export function Items(): JSX.Element {
                         className="even:bg-slate-50/30"
                       >
                         <td className="border-dashed border border-slate-300 px-4 py-3 text-center text-[14px] font-medium text-emerald-900 hover:bg-emerald-50 transition-colors">
-                          {String((currentPage - 1) * PAGE_SIZE + index + 1).padStart(3, '0')}
+                          {item.sku.replace('ITEM-', '')}
                         </td>
                         <td className="border-dashed border border-slate-300 px-4 py-3 hover:bg-emerald-50 transition-colors">
                           <div className="text-[14px] font-medium text-emerald-900">
@@ -749,37 +671,17 @@ export function Items(): JSX.Element {
                           ) : (
                             <div className="flex items-center justify-center gap-2">
                               <div className="text-[14px] text-slate-600">
-                                {(() => {
-                                  let prevRemaining = 0;
-                                  let currentUserInput = quarterData.requestedQuantity || 0;
-                                  let currentBase = quarterData.baseQuantity || 0;
-                                  
-                                  // Calculate previous quarter remaining if we're not in Q1
-                                  if (selectedQuarter > 1) {
-                                    const prevQuarterKey = `q${selectedQuarter - 1}` as 'q1' | 'q2' | 'q3' | 'q4';
-                                    const prevQuarterData = item[prevQuarterKey] || { requestedQuantity: 0, receivedQuantity: 0, baseQuantity: 0 };
-                                    const prevTotalRequested = (prevQuarterData.baseQuantity || 0) + prevQuarterData.requestedQuantity;
-                                    prevRemaining = Math.max(0, prevTotalRequested - prevQuarterData.receivedQuantity);
-                                  }
-                                  
-                                  const finalTotal = currentBase + prevRemaining + currentUserInput;
-                                  
-                                  return (
-                                    <>
-                                      {finalTotal}
-                                      {(prevRemaining > 0 || currentUserInput > 0) && (
-                                        <div className="text-[11px] text-emerald-600">
-                                          {prevRemaining > 0 && (
-                                            <div>Q{selectedQuarter - 1}: {prevRemaining}</div>
-                                          )}
-                                          {currentUserInput > 0 && (
-                                            <div>Q{selectedQuarter}: {currentUserInput}</div>
-                                          )}
-                                        </div>
-                                      )}
-                                    </>
-                                  );
-                                })()}
+                                {totalRequested}
+                                {(prevRemaining > 0 || quarterData.requestedQuantity > 0) && (
+                                  <div className="text-[11px] text-emerald-600">
+                                    {prevRemaining > 0 && (
+                                      <div>Q{selectedQuarter - 1} shortage: +{prevRemaining}</div>
+                                    )}
+                                    {quarterData.requestedQuantity > 0 && (
+                                      <div>Q{selectedQuarter} new: {quarterData.requestedQuantity}</div>
+                                    )}
+                                  </div>
+                                )}
                               </div>
                               <button
                                 type="button"
@@ -815,7 +717,17 @@ export function Items(): JSX.Element {
                           ) : (
                             <div className="flex items-center justify-center gap-2">
                               <div className="text-[14px] text-slate-600">
-                                {quarterData.receivedQuantity}
+                                {totalReceived}
+                                {(prevRemaining < 0 || quarterData.receivedQuantity > 0) && (
+                                  <div className="text-[11px] text-blue-600">
+                                    {prevRemaining < 0 && (
+                                      <div>Q{selectedQuarter - 1} surplus: +{Math.abs(prevRemaining)}</div>
+                                    )}
+                                    {quarterData.receivedQuantity > 0 && (
+                                      <div>Q{selectedQuarter} new: {quarterData.receivedQuantity}</div>
+                                    )}
+                                  </div>
+                                )}
                               </div>
                               <button
                                 type="button"
@@ -829,8 +741,8 @@ export function Items(): JSX.Element {
                           )}
                         </td>
                         <td className="border-dashed border border-slate-300 px-4 py-3 text-center hover:bg-emerald-50 transition-colors">
-                          <div className="text-[14px] text-emerald-900">
-                            {totalRequested > 0 && quarterData.receivedQuantity >= 0 ? remaining : "—"}
+                          <div className="text-[14px] font-medium text-emerald-900">
+                            {remaining > 0 ? remaining : remaining === 0 ? "—" : 0}
                           </div>
                         </td>
                       </tr>
@@ -838,86 +750,101 @@ export function Items(): JSX.Element {
                   })}
                   {/* Fill empty rows to make 8 total */}
                   {Array.from({ length: Math.max(0, PAGE_SIZE - items.length) }, (_, i) => (
-                    <tr key={`empty-${i}`} className="even:bg-slate-50/30">
-                      <td className="border-dashed border border-slate-300 px-4 py-4 text-center hover:bg-emerald-50 transition-colors">
+                    <tr 
+                      key={`empty-${i}`} 
+                      className="even:bg-slate-50/30 group cursor-pointer transition-colors relative"
+                      onClick={() => setIsCreateModalOpen(true)}
+                    >
+                      {/* Normal cells - visible when not hovered */}
+                      <td className="border-dashed border border-slate-300 px-4 py-4 text-center transition-colors group-hover:hidden">
                         <div className="text-[14px] text-slate-400"></div>
                       </td>
-                      <td className="border-dashed border border-slate-300 px-4 py-4 hover:bg-emerald-50 transition-colors">
+                      <td className="border-dashed border border-slate-300 px-4 py-4 transition-colors group-hover:hidden">
                         <div className="text-[14px] text-slate-400"></div>
                       </td>
-                      <td className="border-dashed border border-slate-300 px-4 py-4 text-center hover:bg-emerald-50 transition-colors">
+                      <td className="border-dashed border border-slate-300 px-4 py-4 text-center transition-colors group-hover:hidden">
                         <div className="text-[14px] text-slate-400"></div>
                       </td>
-                      <td className="border-dashed border border-slate-300 px-4 py-4 text-center hover:bg-emerald-50 transition-colors">
+                      <td className="border-dashed border border-slate-300 px-4 py-4 text-center transition-colors group-hover:hidden">
                         <div className="text-[14px] text-slate-400"></div>
                       </td>
-                      <td className="border-dashed border border-slate-300 px-4 py-4 text-center hover:bg-emerald-50 transition-colors">
+                      <td className="border-dashed border border-slate-300 px-4 py-4 text-center transition-colors group-hover:hidden">
                         <div className="text-[14px] text-slate-400"></div>
                       </td>
-                      <td className="border-dashed border border-slate-300 px-4 py-4 text-center hover:bg-emerald-50 transition-colors">
+                      <td className="border-dashed border border-slate-300 px-4 py-4 text-center transition-colors group-hover:hidden">
                         <div className="text-[14px] text-slate-400"></div>
+                      </td>
+                      
+                      {/* Merged cell - only visible on hover */}
+                      <td 
+                        colSpan={6} 
+                        className="border-dashed border border-slate-300 px-4 py-4 text-center transition-colors bg-gray-100 hidden group-hover:table-cell"
+                      >
+                        <div className="flex items-center justify-center gap-2">
+                          <Package size={18} weight="regular" className="text-gray-600" aria-hidden />
+                          <span className="text-gray-600 font-medium text-[14px]">Add Particulars</span>
+                        </div>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-            {totalPages > 1 && (
-              <div className="flex flex-col items-center justify-between gap-4 border-t border-slate-200 px-6 py-4 sm:flex-row">
-                <p className="text-[13px] text-slate-500">
-                  Showing {startItem}-{endItem} of {totalCount}
-                </p>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                    disabled={currentPage <= 1}
-                    className="flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 text-slate-600 transition-colors hover:bg-slate-50 disabled:pointer-events-none disabled:opacity-50"
-                    aria-label="Previous page"
-                  >
-                    <CaretLeft size={18} weight="bold" aria-hidden />
-                  </button>
-                  <div className="flex items-center gap-1">
-                    {getPageNumbers().map((n, i) =>
-                      n === "ellipsis" ? (
-                        <span
-                          key={`ellipsis-${i}`}
-                          className="px-2 text-slate-400"
-                        >
-                          ...
-                        </span>
-                      ) : (
-                        <button
-                          key={n}
-                          type="button"
-                          onClick={() => setPage(n)}
-                          className={`flex h-9 min-w-[36px] items-center justify-center rounded-md px-2 text-[14px] font-medium transition-colors ${
-                            currentPage === n
-                              ? "bg-emerald-900 text-white"
-                              : "border border-slate-200 text-emerald-900 hover:bg-emerald-50"
-                          }`}
-                          aria-current={currentPage === n ? "page" : undefined}
-                          aria-label={`Page ${n}`}
-                        >
-                          {n}
-                        </button>
-                      )
-                    )}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setPage((p) => Math.min(totalPages, p + 1))
-                    }
-                    disabled={currentPage >= totalPages}
-                    className="flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 text-slate-600 transition-colors hover:bg-slate-50 disabled:pointer-events-none disabled:opacity-50"
-                    aria-label="Next page"
-                  >
-                    <CaretRight size={18} weight="bold" aria-hidden />
-                  </button>
+            {/* Always show pagination */}
+            <div className="flex flex-col items-center justify-between gap-4 border-t border-slate-200 px-6 py-4 sm:flex-row">
+              <p className="text-[13px] text-slate-500">
+                Showing {startItem}-{endItem} of {totalCount}
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage <= 1}
+                  className="flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 text-slate-600 transition-colors hover:bg-slate-50 disabled:pointer-events-none disabled:opacity-50"
+                  aria-label="Previous page"
+                >
+                  <CaretLeft size={18} weight="bold" aria-hidden />
+                </button>
+                <div className="flex items-center gap-1">
+                  {getPageNumbers().map((n, i) =>
+                    n === "ellipsis" ? (
+                      <span
+                        key={`ellipsis-${i}`}
+                        className="px-2 text-slate-400"
+                      >
+                        ...
+                      </span>
+                    ) : (
+                      <button
+                        key={n}
+                        type="button"
+                        onClick={() => setPage(n)}
+                        className={`flex h-9 min-w-[36px] items-center justify-center rounded-md px-2 text-[14px] font-medium transition-colors ${
+                          currentPage === n
+                            ? "bg-emerald-900 text-white"
+                            : "border border-slate-200 text-emerald-900 hover:bg-emerald-50"
+                        }`}
+                        aria-current={currentPage === n ? "page" : undefined}
+                        aria-label={`Page ${n}`}
+                      >
+                        {n}
+                      </button>
+                    )
+                  )}
                 </div>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setPage((p) => Math.min(totalPages, p + 1))
+                  }
+                  disabled={currentPage >= totalPages}
+                  className="flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 text-slate-600 transition-colors hover:bg-slate-50 disabled:pointer-events-none disabled:opacity-50"
+                  aria-label="Next page"
+                >
+                  <CaretRight size={18} weight="bold" aria-hidden />
+                </button>
               </div>
-            )}
+            </div>
           </>
         )}
       </div>

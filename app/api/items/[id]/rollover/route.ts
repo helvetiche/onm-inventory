@@ -5,7 +5,7 @@ import { getItemById, updateItemQuarterlyData } from "@/lib/db/server";
 const rolloverSchema = z.object({
   fromQuarter: z.number().int().min(1).max(4),
   toQuarter: z.number().int().min(1).max(4),
-  remainingQuantity: z.number().int().min(0),
+  remainingQuantity: z.number().int(), // Allow negative values for surplus
 });
 
 export async function POST(
@@ -41,14 +41,26 @@ export async function POST(
     const nextQuarterKey = `q${toQuarter}` as 'q1' | 'q2' | 'q3' | 'q4';
     const nextQuarterData = item[nextQuarterKey] || { requestedQuantity: 0, receivedQuantity: 0, baseQuantity: 0 };
     
-    // Add the remaining quantity to the next quarter's base quantity
-    const newBaseQuantity = (nextQuarterData.baseQuantity || 0) + remainingQuantity;
+    let updatedItem;
     
-    console.log(`Rolling over ${remainingQuantity} from Q${fromQuarter} to Q${toQuarter} base quantity`);
-    console.log(`New base quantity for Q${toQuarter}: ${newBaseQuantity}`);
-
-    // Update the next quarter's base quantity
-    const updatedItem = await updateItemQuarterlyData(id, toQuarter, "baseQuantity", newBaseQuantity);
+    if (remainingQuantity > 0) {
+      // Positive remaining (shortage) - add to next quarter's requested (via baseQuantity)
+      const newBaseQuantity = (nextQuarterData.baseQuantity || 0) + remainingQuantity;
+      console.log(`Rolling over shortage of ${remainingQuantity} from Q${fromQuarter} to Q${toQuarter} requested`);
+      console.log(`New base quantity for Q${toQuarter}: ${newBaseQuantity}`);
+      updatedItem = await updateItemQuarterlyData(id, toQuarter, "baseQuantity", newBaseQuantity);
+    } else if (remainingQuantity < 0) {
+      // Negative remaining (surplus) - add absolute value to next quarter's received
+      const surplusAmount = Math.abs(remainingQuantity);
+      const newReceivedQuantity = (nextQuarterData.receivedQuantity || 0) + surplusAmount;
+      console.log(`Rolling over surplus of ${surplusAmount} from Q${fromQuarter} to Q${toQuarter} received`);
+      console.log(`New received quantity for Q${toQuarter}: ${newReceivedQuantity}`);
+      updatedItem = await updateItemQuarterlyData(id, toQuarter, "receivedQuantity", newReceivedQuantity);
+    } else {
+      // Zero remaining - no rollover needed
+      console.log(`No rollover needed from Q${fromQuarter} to Q${toQuarter} (remaining is 0)`);
+      updatedItem = item;
+    }
 
     console.log("Rollover successful:", updatedItem.id);
     return NextResponse.json(updatedItem);

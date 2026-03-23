@@ -128,7 +128,7 @@ const createItemRequest = async (
   return json as InventoryItem;
 };
 
-const ITEMS_PAGE_SIZE = 8;
+const ITEMS_PAGE_SIZE = 16;
 
 export const useItemsQuery = (
   params: ItemsQueryParams = {}

@@ -23,14 +23,14 @@ const createItemBodySchema = z.object({
   }
 );
 
-const limitSchema = z.coerce.number().min(1).max(100).default(8);
+const limitSchema = z.coerce.number().min(1).max(100).default(16);
 const pageSchema = z.coerce.number().min(1).default(1);
 const cursorSchema = z.string().optional();
 const yearSchema = z.coerce.number().min(2000).max(9999).optional();
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const { searchParams } = new URL(request.url);
-  const limit = limitSchema.parse(searchParams.get("limit") ?? 8);
+  const limit = limitSchema.parse(searchParams.get("limit") ?? 16);
   const page = pageSchema.parse(searchParams.get("page") ?? 1);
   const search = searchParams.get("search") ?? undefined;
   const category = searchParams.get("category") ?? undefined;
