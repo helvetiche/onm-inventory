@@ -13,6 +13,7 @@ import {
   Tag,
   Stack,
   Cube,
+  Archive,
 } from "@phosphor-icons/react";
 import {
   useItemsQuery,
